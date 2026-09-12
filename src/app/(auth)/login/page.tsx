@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, Eye, EyeOff, Zap, ArrowRight, AlertCircle, User as UserIcon } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Zap, ArrowRight, AlertCircle, User as UserIcon, GraduationCap, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { DEMO_CREDENTIALS } from '@/data/mockUsers';
@@ -12,10 +12,14 @@ import { UserRole } from '@/types';
 type DemoRole = 'user' | 'admin' | 'viewer';
 type AuthMode = 'signin' | 'signup';
 
-const DEMO_ROLES: { role: DemoRole; label: string }[] = [
-  { role: 'user', label: 'Participant' },
-  { role: 'admin', label: 'Admin' },
-  { role: 'viewer', label: 'Viewer' },
+const DEMO_ROLES: {
+  role: DemoRole;
+  label: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}[] = [
+  { role: 'user', label: 'Participant', icon: GraduationCap },
+  { role: 'admin', label: 'Admin', icon: ShieldCheck },
+  { role: 'viewer', label: 'Viewer', icon: Eye },
 ];
 
 export default function LoginPage() {
@@ -165,13 +169,13 @@ export default function LoginPage() {
 
       {/* ── RIGHT PANEL: CLEAN WHITE AUTHENTICATION CANVAS ── */}
       <div className="login-right-canvas">
-        <div className="login-form-container">
-          {/* Header */}
+        <div className="login-form-area">
+          {/* 1 & 2: Welcome Heading & Subtitle */}
           <div className="login-header-group">
-            <h2 className="login-form-title">
+            <h2 className="login-main-title">
               {authMode === 'signin' ? 'Welcome back' : 'Create an account'}
             </h2>
-            <p className="login-form-subtitle">
+            <p className="login-main-subtitle">
               {authMode === 'signin'
                 ? 'Sign in to continue your quiz journey.'
                 : 'Join Quizora to take quizzes and verify your knowledge.'}
@@ -179,15 +183,15 @@ export default function LoginPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="login-form-element" noValidate>
+          <form onSubmit={handleSubmit} className="login-interactive-form" noValidate>
             {/* Full Name field if Sign Up */}
             {authMode === 'signup' && (
-              <div className="login-input-group">
+              <div className="login-field-group">
                 <label className="login-field-label" htmlFor="fullName">
                   Full Name
                 </label>
-                <div className="login-input-shell">
-                  <UserIcon size={17} className="login-input-icon" />
+                <div className="login-input-wrapper">
+                  <UserIcon size={17} className="login-input-icon-left" />
                   <input
                     id="fullName"
                     type="text"
@@ -202,13 +206,13 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Email field */}
-            <div className="login-input-group">
+            {/* 3: Email field */}
+            <div className="login-field-group">
               <label className="login-field-label" htmlFor="email">
                 Email Address
               </label>
-              <div className="login-input-shell">
-                <Mail size={17} className="login-input-icon" />
+              <div className="login-input-wrapper">
+                <Mail size={17} className="login-input-icon-left" />
                 <input
                   id="email"
                   type="email"
@@ -222,9 +226,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password field */}
-            <div className="login-input-group">
-              <div className="login-field-label-row">
+            {/* 4: Password field + Forgot Password */}
+            <div className="login-field-group">
+              <div className="login-field-header-row">
                 <label className="login-field-label" htmlFor="password">
                   Password
                 </label>
@@ -238,28 +242,28 @@ export default function LoginPage() {
                   </button>
                 )}
               </div>
-              <div className="login-input-shell">
-                <Lock size={17} className="login-input-icon" />
+              <div className="login-input-wrapper">
+                <Lock size={17} className="login-input-icon-left" />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setErrorMsg(''); }}
                   placeholder={authMode === 'signup' ? 'Min 6 characters' : '••••••••'}
-                  className="login-field-input login-password-input"
+                  className="login-field-input"
                   autoComplete={authMode === 'signup' ? 'new-password' : 'current-password'}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="login-eye-toggle-btn"
+                  className="login-input-eye-toggle"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? (
-                    <EyeOff size={16} className="login-eye-icon" />
+                    <EyeOff size={16} />
                   ) : (
-                    <Eye size={16} className="login-eye-icon" />
+                    <Eye size={16} />
                   )}
                 </button>
               </div>
@@ -267,10 +271,10 @@ export default function LoginPage() {
 
             {/* Role picker if Sign Up */}
             {authMode === 'signup' && (
-              <div className="login-input-group">
+              <div className="login-field-group">
                 <label className="login-field-label">Account Role</label>
                 <div className="login-demo-segmented-control" role="tablist">
-                  {DEMO_ROLES.map(({ role, label }) => (
+                  {DEMO_ROLES.map(({ role, label, icon: RoleIcon }) => (
                     <button
                       key={role}
                       type="button"
@@ -279,6 +283,7 @@ export default function LoginPage() {
                       onClick={() => setSignupRole(role)}
                       className={`login-demo-segment-btn ${signupRole === role ? 'is-active' : ''}`}
                     >
+                      <RoleIcon size={14} className="login-role-icon" />
                       {label}
                     </button>
                   ))}
@@ -316,7 +321,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Primary Submit Button */}
+            {/* 5: Primary Submit Button */}
             <button
               type="submit"
               className="login-primary-submit-btn"
@@ -329,23 +334,24 @@ export default function LoginPage() {
                 </>
               ) : (
                 <>
-                  {authMode === 'signin' ? 'Sign In' : 'Create Account'}
-                  <ArrowRight size={17} />
+                  <span>{authMode === 'signin' ? 'Sign In' : 'Create Account'}</span>
+                  <ArrowRight size={17} className="login-btn-arrow" />
                 </>
               )}
             </button>
           </form>
 
-          {/* Understated Demo Access Role Switcher (Visible in Sign In mode) */}
+          {/* 6 & 7: Demo Access Section & Role Buttons (Participant / Admin / Viewer) */}
           {authMode === 'signin' && (
             <div className="login-demo-wrapper">
-              <div className="login-demo-label-row">
-                <span>Demo access</span>
-                <span>•</span>
-                <span>Select a role to quick-fill credentials</span>
+              <div className="login-demo-divider">
+                <span className="login-demo-divider-line" />
+                <span className="login-demo-badge">Demo Access</span>
+                <span className="login-demo-divider-line" />
               </div>
-              <div className="login-demo-segmented-control" role="tablist">
-                {DEMO_ROLES.map(({ role, label }) => {
+              <p className="login-demo-hint">Select a role to quick-fill credentials</p>
+              <div className="login-demo-segmented-control" role="tablist" aria-label="Demo role selector">
+                {DEMO_ROLES.map(({ role, label, icon: RoleIcon }) => {
                   const isSelected = selectedRole === role;
                   return (
                     <button
@@ -356,6 +362,7 @@ export default function LoginPage() {
                       onClick={() => selectDemoRole(role)}
                       className={`login-demo-segment-btn ${isSelected ? 'is-active' : ''}`}
                     >
+                      <RoleIcon size={14} className="login-role-icon" />
                       {label}
                     </button>
                   );
@@ -364,7 +371,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Mode toggle row */}
+          {/* 8: Create Account section / Sign In mode toggle */}
           <div className="login-signup-row">
             <span>
               {authMode === 'signin'
@@ -379,7 +386,7 @@ export default function LoginPage() {
               }}
               className="login-signup-link"
             >
-              {authMode === 'signin' ? 'Create account' : 'Sign In'}
+              {authMode === 'signin' ? 'Create an account' : 'Sign In'}
             </button>
           </div>
         </div>
