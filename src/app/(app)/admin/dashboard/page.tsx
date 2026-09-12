@@ -55,13 +55,13 @@ export default function AdminDashboardPage() {
         style={{
           background: 'var(--bg-surface)',
           borderRadius: 'var(--radius-2xl)',
-          padding: '28px 32px',
+          padding: 'clamp(20px, 3vw, 32px)',
           color: 'var(--text-primary)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: 20,
+          gap: 16,
           boxShadow: 'var(--shadow-md)',
           border: '1px solid var(--color-primary-subtle)',
           position: 'relative',
@@ -70,13 +70,13 @@ export default function AdminDashboardPage() {
       >
         <div style={{ position: 'absolute', top: -30, right: 120, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
         
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', zIndex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, position: 'relative', zIndex: 1, minWidth: 0, flex: '1 1 240px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span className="badge badge-primary" style={{ fontSize: '0.6875rem' }}>
               <Sparkles size={12} /> ADMIN CONSOLE
             </span>
           </div>
-          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.75rem', fontWeight: 800, margin: 0, letterSpacing: '-0.025em', color: 'var(--text-primary)' }}>
+          <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', fontWeight: 800, margin: 0, letterSpacing: '-0.025em', color: 'var(--text-primary)' }}>
             Welcome back, Administrator
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
@@ -84,14 +84,14 @@ export default function AdminDashboardPage() {
           </p>
         </div>
 
-        <Link href="/admin/quizzes/new" className="btn btn-primary btn-lg" style={{ textDecoration: 'none', position: 'relative', zIndex: 1 }}>
+        <Link href="/admin/quizzes/new" className="btn btn-primary btn-md" style={{ textDecoration: 'none', position: 'relative', zIndex: 1, whiteSpace: 'nowrap' }}>
           <Plus size={18} /> Create New Quiz
         </Link>
       </div>
 
       {/* KPI Stat Cards (6 metrics dynamically populated) */}
       {summary && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 150px), 1fr))', gap: 16 }}>
           <StatCard label="Total Quizzes" value={summary.totalQuizzes} icon={<BookOpen size={20} />} />
           <StatCard label="Active Quizzes" value={summary.published} icon={<CheckCircle2 size={20} />} color="var(--color-success)" badge="LIVE" />
           <StatCard label="Total Participants" value={summary.totalParticipants} icon={<Users size={20} />} color="var(--color-primary)" />

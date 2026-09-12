@@ -240,18 +240,18 @@ export default function QuizAttemptPage({ params }: Props) {
         style={{
           background: 'var(--bg-surface)',
           borderBottom: '1px solid var(--border)',
-          padding: '0 clamp(16px, 3vw, 32px)',
+          padding: '0 clamp(10px, 2.5vw, 24px)',
           height: 64,
           display: 'flex',
           alignItems: 'center',
-          gap: 16,
+          gap: 'clamp(8px, 2vw, 16px)',
           position: 'sticky',
           top: 0,
           zIndex: 40,
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.015em' }}>
+          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '0.9375rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.015em' }}>
             {quiz.title}
           </h1>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: 0, fontWeight: 500 }}>
@@ -259,7 +259,7 @@ export default function QuizAttemptPage({ params }: Props) {
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 1.5vw, 12px)', flexShrink: 0 }}>
           {/* Progress bar */}
           <div style={{ width: 140, height: 6, background: 'var(--bg-slate)', borderRadius: 'var(--radius-full)', overflow: 'hidden' }} className="mobile-hidden">
             <div style={{ height: '100%', width: `${((currentIndex + 1) / questions.length) * 100}%`, background: 'var(--color-primary)', borderRadius: 'var(--radius-full)', transition: 'width 0.3s ease' }} />
@@ -302,14 +302,14 @@ export default function QuizAttemptPage({ params }: Props) {
       )}
 
       {/* ── MAIN TESTING AREA ── */}
-      <div style={{ flex: 1, display: 'flex', gap: 0, overflow: 'hidden', maxWidth: 1240, margin: '0 auto', width: '100%', padding: '0 20px' }}>
+      <div style={{ flex: 1, display: 'flex', gap: 0, overflow: 'hidden', maxWidth: 1240, margin: '0 auto', width: '100%', padding: '0 clamp(10px, 2vw, 20px)' }}>
         {/* Question Panel Area */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '32px 0' }}>
+        <main style={{ flex: 1, overflowY: 'auto', padding: 'clamp(16px, 3vw, 32px) 0' }}>
           <div style={{ maxWidth: 720, margin: '0 auto' }}>
             
             {/* Question Header Card */}
-            <div className="card" style={{ padding: 28, marginBottom: 20 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+            <div className="card" style={{ padding: 'clamp(16px, 3vw, 28px)', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
                 <span
                   style={{
                     fontFamily: 'var(--font-heading)',
@@ -335,7 +335,7 @@ export default function QuizAttemptPage({ params }: Props) {
                 </div>
               </div>
 
-              <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', margin: 0, lineHeight: 1.45, letterSpacing: '-0.02em' }}>
+              <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(1.0625rem, 2.5vw, 1.25rem)', fontWeight: 800, color: 'var(--text-primary)', margin: 0, lineHeight: 1.45, letterSpacing: '-0.02em' }}>
                 {currentQuestion.text}
               </h2>
 
@@ -391,36 +391,38 @@ export default function QuizAttemptPage({ params }: Props) {
             </div>
 
             {/* Navigation Action Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 32, flexWrap: 'wrap' }}>
-              <button
-                className="btn btn-secondary btn-md"
-                onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
-                disabled={currentIndex === 0}
-              >
-                <ChevronLeft size={16} /> Previous
-              </button>
-
-              <button
-                className={`btn btn-md ${isMarked ? 'btn-gold' : 'btn-ghost'}`}
-                onClick={toggleMark}
-              >
-                <Flag size={14} /> {isMarked ? 'Unmark Review' : 'Mark for Review'}
-              </button>
-
-              <div style={{ flex: 1 }} />
-
-              {currentIndex < questions.length - 1 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 28, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <button
-                  className="btn btn-primary btn-md"
-                  onClick={() => setCurrentIndex((i) => Math.min(questions.length - 1, i + 1))}
+                  className="btn btn-secondary btn-md"
+                  onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+                  disabled={currentIndex === 0}
                 >
-                  Next <ChevronRight size={16} />
+                  <ChevronLeft size={16} /> Previous
                 </button>
-              ) : (
-                <button className="btn btn-primary btn-md" onClick={() => setSubmitModalOpen(true)}>
-                  <Send size={15} /> Submit Quiz
+
+                <button
+                  className={`btn btn-md ${isMarked ? 'btn-gold' : 'btn-ghost'}`}
+                  onClick={toggleMark}
+                >
+                  <Flag size={14} /> {isMarked ? 'Unmark Review' : 'Mark for Review'}
                 </button>
-              )}
+              </div>
+
+              <div>
+                {currentIndex < questions.length - 1 ? (
+                  <button
+                    className="btn btn-primary btn-md"
+                    onClick={() => setCurrentIndex((i) => Math.min(questions.length - 1, i + 1))}
+                  >
+                    Next <ChevronRight size={16} />
+                  </button>
+                ) : (
+                  <button className="btn btn-primary btn-md" onClick={() => setSubmitModalOpen(true)}>
+                    <Send size={15} /> Submit Quiz
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </main>
@@ -481,9 +483,9 @@ export default function QuizAttemptPage({ params }: Props) {
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => setSubmitModalOpen(false)} disabled={submitting}>Continue Quiz</button>
-            <button className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={handleSubmit} disabled={submitting}>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <button className="btn btn-secondary btn-md" style={{ flex: '1 1 140px' }} onClick={() => setSubmitModalOpen(false)} disabled={submitting}>Continue Quiz</button>
+            <button className="btn btn-primary btn-md" style={{ flex: '1 1 140px' }} onClick={handleSubmit} disabled={submitting}>
               {submitting ? <span className="animate-spin" style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#ffffff', display: 'inline-block' }} /> : <><Send size={15} /> Submit Quiz</>}
             </button>
           </div>

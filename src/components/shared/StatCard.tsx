@@ -39,7 +39,7 @@ export default function StatCard({ label, value, icon, trend, color, subtitle, b
           <p
             style={{
               fontFamily: 'var(--font-heading)',
-              fontSize: '2rem',
+              fontSize: 'clamp(1.5rem, 3vw, 2rem)',
               fontWeight: 800,
               margin: 0,
               color: 'var(--text-primary)',

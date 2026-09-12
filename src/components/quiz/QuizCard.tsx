@@ -88,7 +88,7 @@ export default function QuizCard({ quiz, attemptStatus, score, maxScore, actionH
       {/* Footer Info & Action */}
       <div>
         {/* Meta Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingBottom: 14, borderBottom: '1px solid var(--border-subtle)', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, paddingBottom: 14, borderBottom: '1px solid var(--border-subtle)', marginBottom: 14, flexWrap: 'wrap' }}>
           <span
             style={{
               display: 'flex',

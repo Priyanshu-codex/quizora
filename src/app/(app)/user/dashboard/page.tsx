@@ -98,7 +98,7 @@ export default function UserDashboardPage() {
       </div>
 
       {/* KPI Stats Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 16 }}>
         <StatCard
           label="Available Quizzes"
           value={quizzes.length}
@@ -178,7 +178,7 @@ export default function UserDashboardPage() {
             <p style={{ color: 'var(--text-muted)', margin: 0 }}>No quizzes available right now.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 20 }}>
             {quizzes.map((quiz) => {
               const status = getAttemptStatus(quiz.id);
               const result = getAttemptResult(quiz.id);

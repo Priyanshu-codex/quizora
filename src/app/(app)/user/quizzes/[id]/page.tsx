@@ -89,7 +89,7 @@ export default function QuizDetailPage({ params }: Props) {
       </div>
 
       {/* Quiz info grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 12 }}>
         {infoItems.map(({ icon, label, value }) => (
           <div key={label} className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-primary)' }}>{icon}</div>
@@ -140,9 +140,9 @@ export default function QuizDetailPage({ params }: Props) {
       </div>
 
       {/* CTA */}
-      <div style={{ display: 'flex', gap: 12 }}>
-        <button className="btn btn-secondary btn-md" onClick={() => router.back()}>Go back</button>
-        <button className="btn btn-primary btn-lg" onClick={() => setConfirmOpen(true)} style={{ flex: 1 }}>
+      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+        <button className="btn btn-secondary btn-md" onClick={() => router.back()} style={{ flex: '1 1 120px' }}>Go back</button>
+        <button className="btn btn-primary btn-lg" onClick={() => setConfirmOpen(true)} style={{ flex: '2 1 200px' }}>
           <Play size={16} />
           Start Quiz
           <ChevronRight size={16} />
@@ -175,9 +175,9 @@ export default function QuizDetailPage({ params }: Props) {
               </p>
             </div>
           )}
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button className="btn btn-secondary btn-md" style={{ flex: 1 }} onClick={() => setConfirmOpen(false)} disabled={starting}>Cancel</button>
-            <button className="btn btn-primary btn-md" style={{ flex: 1 }} onClick={handleStart} disabled={starting}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <button className="btn btn-secondary btn-md" style={{ flex: '1 1 120px' }} onClick={() => setConfirmOpen(false)} disabled={starting}>Cancel</button>
+            <button className="btn btn-primary btn-md" style={{ flex: '1 1 120px' }} onClick={handleStart} disabled={starting}>
               {starting ? <span className="animate-spin" style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', display: 'inline-block' }} /> : <><Play size={14} /> Start Quiz</>}
             </button>
           </div>

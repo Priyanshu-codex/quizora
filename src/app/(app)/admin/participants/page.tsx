@@ -43,12 +43,12 @@ export default function AdminParticipantsPage() {
       <PageHeader title="Participant Tracking" description="Monitor real-time participation status, scores, and proctoring violations." />
 
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-        <SearchBar value={search} onChange={setSearch} placeholder="Search by name or email…" style={{ flex: '1 1 240px' }} />
-        <select className="select-base" value={quizFilter} onChange={(e) => setQuizFilter(e.target.value)} style={{ flex: '0 1 220px' }} aria-label="Filter by quiz">
+        <SearchBar value={search} onChange={setSearch} placeholder="Search by name or email…" style={{ flex: '1 1 200px', minWidth: 140 }} />
+        <select className="select-base" value={quizFilter} onChange={(e) => setQuizFilter(e.target.value)} style={{ flex: '1 1 180px' }} aria-label="Filter by quiz">
           <option value="">All quizzes</option>
           {quizzes.map((q) => <option key={q.id} value={q.id}>{q.title}</option>)}
         </select>
-        <select className="select-base" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ flex: '0 1 180px' }} aria-label="Filter by status">
+        <select className="select-base" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ flex: '1 1 150px' }} aria-label="Filter by status">
           <option value="">All statuses</option>
           <option value="not_attempted">Not attempted</option>
           <option value="in_progress">In progress</option>

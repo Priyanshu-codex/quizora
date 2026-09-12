@@ -145,20 +145,20 @@ export default function AdminQuizzesPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
           {/* Segmented Tabs */}
-          <div className="login-segmented-control" style={{ width: 'fit-content' }}>
+          <div className="segmented-control">
             {(['all', 'published', 'draft', 'closed'] as const).map((tab) => (
               <button
                 key={tab}
-                className={`login-segment-btn ${activeTab === tab ? 'is-active' : ''}`}
+                className={`segment-btn ${activeTab === tab ? 'is-active' : ''}`}
                 onClick={() => setActiveTab(tab)}
-                style={{ padding: '0 16px', textTransform: 'capitalize' }}
+                style={{ padding: '0 14px', textTransform: 'capitalize' }}
               >
                 {tab} {tab === 'all' ? `(${quizzes.length})` : `(${quizzes.filter(q => q.status === tab).length})`}
               </button>
             ))}
           </div>
 
-          <SearchBar value={search} onChange={setSearch} placeholder="Search quizzes by title…" style={{ width: 280 }} />
+          <SearchBar value={search} onChange={setSearch} placeholder="Search quizzes by title…" style={{ flex: '1 1 220px', maxWidth: '100%' }} />
         </div>
       </div>
 

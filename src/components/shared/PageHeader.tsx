@@ -19,7 +19,7 @@ export default function PageHeader({ title, description, actions, badge }: PageH
         flexWrap: 'wrap',
       }}
     >
-      <div style={{ minWidth: 0 }}>
+      <div style={{ minWidth: 0, flex: '1 1 240px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.5rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.025em' }}>
             {title}
@@ -33,7 +33,7 @@ export default function PageHeader({ title, description, actions, badge }: PageH
         )}
       </div>
       {actions && (
-        <div style={{ display: 'flex', gap: 10, flexShrink: 0, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', minWidth: 0 }}>
           {actions}
         </div>
       )}

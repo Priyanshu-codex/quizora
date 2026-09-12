@@ -149,7 +149,7 @@ export default function LandingPage() {
               }}
             />
 
-            <div style={{ position: 'relative', zIndex: 2, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 28, alignItems: 'center' }}>
+            <div style={{ position: 'relative', zIndex: 2, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: 28, alignItems: 'center' }}>
               
               {/* Mock Active Quiz Card */}
               <div
@@ -164,7 +164,7 @@ export default function LandingPage() {
                   boxShadow: 'var(--shadow-md)',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
                   <span className="badge badge-primary" style={{ fontSize: '0.6875rem' }}>
                     QUESTION 04 OF 20
                   </span>
@@ -195,9 +195,9 @@ export default function LandingPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 
                 {/* Score Ring Card */}
-                <div style={{ background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20, display: 'flex', alignItems: 'center', gap: 20, boxShadow: 'var(--shadow-sm)' }}>
+                <div style={{ background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: 20, display: 'flex', alignItems: 'center', gap: 20, boxShadow: 'var(--shadow-sm)', flexWrap: 'wrap' }}>
                   <ProgressRing value={94} size={84} strokeWidth={8} color="var(--color-primary)" label="94%" />
-                  <div>
+                  <div style={{ minWidth: 0, flex: '1 1 140px' }}>
                     <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-primary)', fontWeight: 700 }}>
                       Performance Rating
                     </span>
@@ -211,7 +211,7 @@ export default function LandingPage() {
                 </div>
 
                 {/* Micro Widgets */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: 14 }}>
                   <div style={{ background: '#FFFFFF', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: 14, display: 'flex', alignItems: 'center', gap: 10, boxShadow: 'var(--shadow-xs)' }}>
                     <div style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--color-success-light)', color: 'var(--color-success)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <ShieldCheck size={18} />

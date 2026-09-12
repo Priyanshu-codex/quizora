@@ -58,14 +58,14 @@ export default function UserQuizzesPage() {
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
-        <SearchBar value={search} onChange={setSearch} placeholder="Search quizzes…" style={{ flex: '1 1 200px', minWidth: 180 }} />
-        <select className="select-base" value={difficulty} onChange={(e) => setDifficulty(e.target.value)} style={{ flex: '0 1 150px' }} aria-label="Filter by difficulty">
+        <SearchBar value={search} onChange={setSearch} placeholder="Search quizzes…" style={{ flex: '1 1 180px', minWidth: 140 }} />
+        <select className="select-base" value={difficulty} onChange={(e) => setDifficulty(e.target.value)} style={{ flex: '1 1 140px' }} aria-label="Filter by difficulty">
           <option value="">All difficulties</option>
           <option value="easy">Easy</option>
           <option value="medium">Medium</option>
           <option value="hard">Hard</option>
         </select>
-        <select className="select-base" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ flex: '0 1 160px' }} aria-label="Filter by status">
+        <select className="select-base" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ flex: '1 1 140px' }} aria-label="Filter by status">
           <option value="">All statuses</option>
           <option value="not_attempted">Not attempted</option>
           <option value="in_progress">In progress</option>
@@ -87,7 +87,7 @@ export default function UserQuizzesPage() {
 
       {/* Grid */}
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 16 }}>
           {[1, 2, 3, 4, 5, 6].map((i) => <div key={i} className="skeleton" style={{ height: 220, borderRadius: 'var(--radius-lg)' }} />)}
         </div>
       ) : filtered.length === 0 ? (
@@ -104,7 +104,7 @@ export default function UserQuizzesPage() {
           />
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: 16 }}>
           {filtered.map((quiz) => {
             const status = getAttemptStatus(quiz.id);
             const result = getAttemptResult(quiz.id);
