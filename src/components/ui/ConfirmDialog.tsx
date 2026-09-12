@@ -53,14 +53,14 @@ export default function ConfirmDialog({
             {message}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 12, width: '100%', marginTop: 6 }}>
-          <button onClick={onClose} className="btn btn-secondary btn-md" style={{ flex: 1 }} disabled={isLoading}>
+        <div style={{ display: 'flex', gap: 12, width: '100%', marginTop: 6, flexWrap: 'wrap' }}>
+          <button onClick={onClose} className="btn btn-secondary btn-md" style={{ flex: '1 1 120px' }} disabled={isLoading}>
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
             className={`btn btn-md ${variant === 'danger' ? 'btn-danger' : 'btn-primary'}`}
-            style={{ flex: 1 }}
+            style={{ flex: '1 1 120px' }}
             disabled={isLoading}
           >
             {isLoading ? (

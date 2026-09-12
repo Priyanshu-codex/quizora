@@ -30,9 +30,10 @@ export default function ViewerDashboardPage() {
           background: 'var(--bg-slate)',
           border: '1px solid var(--border)',
           borderRadius: 'var(--radius-xl)',
-          padding: '18px 24px',
+          padding: 'clamp(14px, 2.5vw, 20px) clamp(16px, 3vw, 24px)',
           display: 'flex',
           alignItems: 'center',
+          flexWrap: 'wrap',
           gap: 14,
         }}
       >
@@ -52,8 +53,8 @@ export default function ViewerDashboardPage() {
         >
           <Eye size={20} />
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+        <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 2 }}>
             <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
               Read-Only Viewer Access
             </h3>
@@ -66,11 +67,11 @@ export default function ViewerDashboardPage() {
       </div>
 
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 16 }}>
           {[1,2,3,4].map(i => <div key={i} className="card" style={{ height: 110, background: 'var(--bg-slate)' }} />)}
         </div>
       ) : summary ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 16 }}>
           <StatCard label="Total Quizzes" value={summary.totalQuizzes} icon={<BookOpen size={20} />} />
           <StatCard label="Published Quizzes" value={summary.published} icon={<BarChart3 size={20} />} color="var(--color-success)" />
           <StatCard label="Total Participants" value={summary.totalParticipants} icon={<Users size={20} />} color="var(--color-primary)" />

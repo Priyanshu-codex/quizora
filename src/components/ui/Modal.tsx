@@ -55,9 +55,10 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', m
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '20px 24px 16px',
+              padding: 'clamp(14px, 3vw, 20px) clamp(16px, 3vw, 24px) clamp(12px, 3vw, 16px)',
               borderBottom: '1px solid var(--border)',
               background: 'var(--bg-slate)',
+              flexShrink: 0,
             }}
           >
             <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.0625rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)', letterSpacing: '-0.015em' }}>
@@ -70,7 +71,9 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md', m
             )}
           </div>
         )}
-        <div style={{ padding: title ? '20px 24px 24px' : '28px 24px' }}>{children}</div>
+        <div className="modal-body" style={{ padding: title ? 'clamp(14px, 3vw, 20px) clamp(16px, 3vw, 24px) clamp(16px, 3vw, 24px)' : 'clamp(18px, 3vw, 28px) clamp(16px, 3vw, 24px)', overflowY: 'auto' }}>
+          {children}
+        </div>
       </div>
     </div>
   );

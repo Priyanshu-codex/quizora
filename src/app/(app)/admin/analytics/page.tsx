@@ -23,7 +23,7 @@ export default function AdminAnalyticsPage() {
       <PageHeader title="Analytics" description="Platform-wide quiz performance overview" />
 
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 290px), 1fr))', gap: 16 }}>
           {[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 280, borderRadius: 'var(--radius-lg)' }} />)}
         </div>
       ) : analytics.length === 0 ? (
@@ -31,7 +31,7 @@ export default function AdminAnalyticsPage() {
           No attempt data available yet.
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 290px), 1fr))', gap: 16 }}>
           {analytics.map((a) => (
             <div key={a.quizId} className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 18 }}>
               <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)', lineHeight: 1.3 }}>{a.quizTitle}</h3>

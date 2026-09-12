@@ -41,8 +41,8 @@ export default function ViewerParticipantsPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fade-in 300ms ease' }}>
       <PageHeader title="Participants" description="View quiz participation data (read-only)" badge={<span className="badge badge-neutral">Read-only</span>} />
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <SearchBar value={search} onChange={setSearch} style={{ flex: '1 1 200px' }} />
-        <select className="select-base" value={quizFilter} onChange={(e) => setQuizFilter(e.target.value)} style={{ flex: '0 1 200px' }} aria-label="Filter by quiz">
+        <SearchBar value={search} onChange={setSearch} style={{ flex: '1 1 200px', minWidth: 140 }} />
+        <select className="select-base" value={quizFilter} onChange={(e) => setQuizFilter(e.target.value)} style={{ flex: '1 1 180px' }} aria-label="Filter by quiz">
           <option value="">All quizzes</option>
           {quizzes.map((q) => <option key={q.id} value={q.id}>{q.title}</option>)}
         </select>

@@ -121,7 +121,7 @@ export default function Header({ title, subtitle, onMenuClick }: HeaderProps) {
             {title}
           </h1>
           {user.role === 'admin' && (
-            <span className="badge badge-primary" style={{ fontSize: '0.625rem', letterSpacing: '0.05em' }}>
+            <span className="badge badge-primary hide-mobile" style={{ fontSize: '0.625rem', letterSpacing: '0.05em' }}>
               ADMIN CONSOLE
             </span>
           )}
@@ -159,7 +159,7 @@ export default function Header({ title, subtitle, onMenuClick }: HeaderProps) {
             className="btn btn-ghost btn-icon"
             aria-label="Notifications"
             onClick={() => setShowNotifications(!showNotifications)}
-            style={{ position: 'relative', background: showNotifications ? 'var(--bg-slate)' : 'transparent' }}
+            style={{ position: 'relative' }}
           >
             <Bell size={18} />
             {unreadCount > 0 && (
@@ -184,7 +184,8 @@ export default function Header({ title, subtitle, onMenuClick }: HeaderProps) {
                 position: 'absolute',
                 right: 0,
                 top: 'calc(100% + 8px)',
-                width: 340,
+                width: 'min(340px, calc(100vw - 32px))',
+                maxWidth: 'calc(100vw - 32px)',
                 background: 'var(--bg-surface)',
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-lg)',
@@ -290,7 +291,8 @@ export default function Header({ title, subtitle, onMenuClick }: HeaderProps) {
                 position: 'absolute',
                 right: 0,
                 top: 'calc(100% + 8px)',
-                width: 240,
+                width: 'min(240px, calc(100vw - 32px))',
+                maxWidth: 'calc(100vw - 32px)',
                 background: 'var(--bg-surface)',
                 border: '1px solid var(--border)',
                 borderRadius: 'var(--radius-lg)',

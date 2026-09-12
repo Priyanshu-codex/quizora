@@ -74,14 +74,14 @@ export default function ResultPage({ params }: Props) {
   const unanswered = questions.length - correct - incorrect;
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--bg-app)', padding: 'clamp(20px, 4vw, 48px)' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--bg-app)', padding: 'clamp(14px, 3vw, 40px)' }}>
       <div style={{ maxWidth: 760, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, animation: 'fade-in 400ms ease' }}>
 
         {/* Hero Score Card */}
         <div
           className="card"
           style={{
-            padding: 'clamp(28px, 4vw, 44px)',
+            padding: 'clamp(24px, 4vw, 44px)',
             textAlign: 'center',
             background: 'var(--bg-surface)',
             color: 'var(--text-primary)',
@@ -137,7 +137,7 @@ export default function ResultPage({ params }: Props) {
         </div>
 
         {/* Metrics Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 130px), 1fr))', gap: 14 }}>
           {[
             { icon: <CheckCircle2 size={20} />, label: 'Correct', value: correct, color: 'var(--color-success)' },
             { icon: <XCircle size={20} />, label: 'Incorrect', value: incorrect, color: 'var(--color-error)' },
@@ -243,10 +243,10 @@ export default function ResultPage({ params }: Props) {
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-          <Link href="/user/dashboard" className="btn btn-secondary btn-lg" style={{ flex: 1, textDecoration: 'none' }}>
+          <Link href="/user/dashboard" className="btn btn-secondary btn-lg" style={{ flex: '1 1 200px', textDecoration: 'none' }}>
             <Home size={16} /> Return to Dashboard
           </Link>
-          <Link href="/user/quizzes" className="btn btn-primary btn-lg" style={{ flex: 1, textDecoration: 'none' }}>
+          <Link href="/user/quizzes" className="btn btn-primary btn-lg" style={{ flex: '1 1 200px', textDecoration: 'none' }}>
             <RotateCcw size={16} /> Explore More Quizzes
           </Link>
         </div>

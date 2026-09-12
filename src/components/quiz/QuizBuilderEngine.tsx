@@ -444,7 +444,7 @@ export default function QuizBuilderEngine({
             </span>
           </div>
 
-          <div style={{ height: 24, width: 1, background: 'var(--border)' }} />
+          <div className="mobile-hidden" style={{ height: 24, width: 1, background: 'var(--border)' }} />
 
           <button
             className="btn btn-secondary btn-sm"
@@ -527,7 +527,7 @@ export default function QuizBuilderEngine({
           </div>
 
           {/* Grid Settings Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 16 }}>
             <div className="form-group">
               <label className="input-label" style={{ fontWeight: 700 }}>
                 Duration (minutes) *
@@ -759,7 +759,7 @@ export default function QuizBuilderEngine({
                       </span>
 
                       {/* Type & Marks Badges */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                      <div className="mobile-hidden" style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                         <span className="badge badge-neutral" style={{ fontSize: '0.6875rem' }}>
                           {q.type === 'single' ? 'Single Choice' : q.type === 'multiple' ? 'Multiple Choice' : 'True/False'}
                         </span>
@@ -911,7 +911,7 @@ export default function QuizBuilderEngine({
                       </div>
 
                       {/* Question Type & Marks Row */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))', gap: 16 }}>
                         <div className="form-group">
                           <label className="input-label" style={{ fontWeight: 700 }}>
                             Question Type

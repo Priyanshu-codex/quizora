@@ -27,7 +27,7 @@ export default function AdminSettingsPage() {
       <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0 }}>Quiz Defaults</h3>
         <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0 }}>These values will be pre-filled when creating a new quiz.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))', gap: 14 }}>
           {[
             { label: 'Default Duration (min)', key: 'duration' as const, min: 1, max: 300 },
             { label: 'Default Questions', key: 'questionCount' as const, min: 1, max: 200 },
@@ -70,7 +70,7 @@ export default function AdminSettingsPage() {
       </div>
 
       <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10 }}>
           <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0 }}>Platform Information</h3>
           <span className={`badge ${isConfigured ? 'badge-success' : 'badge-neutral'}`}>
             {isConfigured ? '● Supabase Connected' : '○ Supabase Ready (Local Cache)'}
@@ -84,7 +84,7 @@ export default function AdminSettingsPage() {
             { label: 'Auth Provider', value: isConfigured ? 'Supabase Auth (JWT + PKCE Session)' : 'Supabase Auth Layer' },
             { label: 'Data Entities', value: 'Profiles, Quizzes, Questions, Attempts, Answers' },
           ].map(({ label, value }) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.875rem' }}>
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--border-subtle)', fontSize: '0.875rem' }}>
               <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
               <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{value}</span>
             </div>

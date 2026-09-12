@@ -27,8 +27,9 @@ export default function SecurityStatus({ violations, maxViolations }: SecuritySt
       ) : (
         <ShieldAlert size={14} style={{ color: 'var(--color-error)', flexShrink: 0 }} />
       )}
-      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isClean ? 'var(--text-primary)' : 'var(--color-error)' }}>
-        {isClean ? 'Secure Quiz Mode' : `Violations: ${violations}/${maxViolations}`}
+      <span className="security-status-text" style={{ fontSize: '0.75rem', fontWeight: 700, color: isClean ? 'var(--text-primary)' : 'var(--color-error)', whiteSpace: 'nowrap' }}>
+        <span className="security-status-full">{isClean ? 'Secure Quiz Mode' : `Violations: ${violations}/${maxViolations}`}</span>
+        <span className="security-status-compact">{isClean ? 'Secure' : `${violations}/${maxViolations}`}</span>
       </span>
       <span
         style={{
@@ -36,8 +37,17 @@ export default function SecurityStatus({ violations, maxViolations }: SecuritySt
           height: 6,
           borderRadius: '50%',
           background: isClean ? 'var(--color-success)' : 'var(--color-error)',
+          flexShrink: 0,
         }}
       />
+      <style jsx>{`
+        .security-status-full { display: inline; }
+        .security-status-compact { display: none; }
+        @media (max-width: 640px) {
+          .security-status-full { display: none; }
+          .security-status-compact { display: inline; }
+        }
+      `}</style>
     </div>
   );
 }

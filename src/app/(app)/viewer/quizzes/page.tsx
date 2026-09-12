@@ -29,8 +29,8 @@ export default function ViewerQuizzesPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, animation: 'fade-in 300ms ease' }}>
       <PageHeader title="Quizzes" description="View all quizzes on the platform (read-only)" badge={<span className="badge badge-neutral">Read-only</span>} />
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-        <SearchBar value={search} onChange={setSearch} style={{ flex: '1 1 200px' }} />
-        <select className="select-base" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ flex: '0 1 160px' }} aria-label="Filter by status">
+        <SearchBar value={search} onChange={setSearch} style={{ flex: '1 1 200px', minWidth: 140 }} />
+        <select className="select-base" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} style={{ flex: '1 1 150px' }} aria-label="Filter by status">
           <option value="">All statuses</option>
           <option value="published">Published</option>
           <option value="draft">Draft</option>
