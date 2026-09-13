@@ -44,7 +44,7 @@ export function formatDateTime(iso: string): string {
 }
 
 export function getGreeting(): string {
-  return 'Welcome back';
+  return 'Good to see you';
 }
 
 export function getInitials(name: string): string {

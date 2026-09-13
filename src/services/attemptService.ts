@@ -204,10 +204,14 @@ export const attemptService = {
       };
       syncStoredAttempts(current);
       if (typeof window !== 'undefined') {
-        const active = JSON.parse(localStorage.getItem(ACTIVE_ATTEMPT_KEY) || '{}');
-        if (active.id === attemptId) {
-          active.violations = updatedViolations;
-          localStorage.setItem(ACTIVE_ATTEMPT_KEY, JSON.stringify(active));
+        try {
+          const active = JSON.parse(localStorage.getItem(ACTIVE_ATTEMPT_KEY) || '{}');
+          if (active.id === attemptId) {
+            active.violations = updatedViolations;
+            localStorage.setItem(ACTIVE_ATTEMPT_KEY, JSON.stringify(active));
+          }
+        } catch {
+          // ignore corrupted active attempt in storage
         }
       }
 
@@ -330,8 +334,12 @@ export const attemptService = {
 
   async getById(id: string): Promise<Attempt | null> {
     if (typeof window !== 'undefined') {
-      const cached = localStorage.getItem(`quizora_result_${id}`);
-      if (cached) return JSON.parse(cached);
+      try {
+        const cached = localStorage.getItem(`quizora_result_${id}`);
+        if (cached) return JSON.parse(cached);
+      } catch {
+        // Safe fallback
+      }
     }
 
     if (isSupabaseConfigured()) {
@@ -340,7 +348,7 @@ export const attemptService = {
           .from('attempts')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
         if (!error && attemptRow) {
           // Fetch answers

@@ -72,7 +72,7 @@ export const quizService = {
           .select('*')
           .order('created_at', { ascending: false });
 
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           quizzesStore = (data as SupabaseQuizRow[]).map(mapRowToQuiz);
           return quizzesStore;
         }
@@ -92,7 +92,7 @@ export const quizService = {
           .eq('status', 'published')
           .order('created_at', { ascending: false });
 
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           return (data as SupabaseQuizRow[]).map(mapRowToQuiz);
         }
       } catch {
@@ -109,7 +109,7 @@ export const quizService = {
           .from('quizzes')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
         if (!error && data) {
           return mapRowToQuiz(data as SupabaseQuizRow);
@@ -139,7 +139,7 @@ export const quizService = {
           .from('quizzes')
           .insert(row)
           .select()
-          .single();
+          .maybeSingle();
 
         if (!error && inserted) {
           const created = mapRowToQuiz(inserted as SupabaseQuizRow);
@@ -189,7 +189,7 @@ export const quizService = {
           .update(row)
           .eq('id', id)
           .select()
-          .single();
+          .maybeSingle();
 
         if (!error && updatedRow) {
           const saved = mapRowToQuiz(updatedRow as SupabaseQuizRow);
@@ -258,12 +258,22 @@ export const quizService = {
     }
 
     if (isSupabaseConfigured()) {
-      supabase.rpc('increment_quiz_attempt', { quiz_id: id }).catch(() => {
-        // Fallback update directly if RPC is not present
-        if (q) {
-          supabase.from('quizzes').update({ attempt_count: q.attemptCount }).eq('id', id).catch(() => {});
+      (async () => {
+        try {
+          const { error } = await supabase.rpc('increment_quiz_attempt', { quiz_id: id });
+          if (error && q) {
+            await supabase.from('quizzes').update({ attempt_count: q.attemptCount }).eq('id', id);
+          }
+        } catch {
+          if (q) {
+            try {
+              await supabase.from('quizzes').update({ attempt_count: q.attemptCount }).eq('id', id);
+            } catch {
+              // Ignore background update error
+            }
+          }
         }
-      });
+      })();
     }
   },
 };

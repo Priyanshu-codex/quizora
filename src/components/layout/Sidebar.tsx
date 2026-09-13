@@ -39,6 +39,7 @@ function getNavGroups(role: string): NavGroup[] {
           { label: 'Participants', href: '/viewer/participants', icon: <Users size={17} /> },
           { label: 'Results', href: '/viewer/results', icon: <FileText size={17} /> },
           { label: 'Analytics', href: '/viewer/analytics', icon: <BarChart3 size={17} /> },
+          { label: 'Settings', href: '/viewer/settings', icon: <Settings size={17} /> },
         ],
       },
     ];

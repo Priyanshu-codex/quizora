@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { BarChart3, BookOpen, Users, FileText, Eye } from 'lucide-react';
 import { resultService } from '@/services/resultService';
 import StatCard from '@/components/shared/StatCard';
+import { useAuth } from '@/context/AuthContext';
 
 interface ViewerSummaryData {
   totalQuizzes: number;
@@ -14,6 +15,7 @@ interface ViewerSummaryData {
 }
 
 export default function ViewerDashboardPage() {
+  const { user } = useAuth();
   const [summary, setSummary] = useState<ViewerSummaryData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -56,9 +58,9 @@ export default function ViewerDashboardPage() {
         <div style={{ flex: '1 1 220px', minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 2 }}>
             <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '1rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-              Read-Only Viewer Access
+              Good to see you, {user?.name || 'Viewer'}!
             </h3>
-            <span className="badge badge-gold">READ ONLY</span>
+            <span className="badge badge-gold">READ ONLY ACCESS</span>
           </div>
           <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.4 }}>
             You are viewing live platform metrics, quizzes, and participant performance in read-only mode. Creation and deletion controls are hidden.

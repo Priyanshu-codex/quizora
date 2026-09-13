@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Save } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import PageHeader from '@/components/shared/PageHeader';
+import ChangeNameCard from '@/components/settings/ChangeNameCard';
 
 import { isSupabaseConfigured } from '@/lib/supabase/client';
 
@@ -23,6 +24,8 @@ export default function AdminSettingsPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 640, animation: 'fade-in 300ms ease' }}>
       <PageHeader title="Settings" description="Configure quiz platform defaults and preferences" />
+
+      <ChangeNameCard />
 
       <div className="card" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <h3 style={{ fontSize: '0.9375rem', fontWeight: 700, margin: 0 }}>Quiz Defaults</h3>

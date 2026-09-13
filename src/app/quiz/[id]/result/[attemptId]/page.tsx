@@ -152,20 +152,6 @@ export default function ResultPage({ params }: Props) {
           ))}
         </div>
 
-        {/* Security Violations Log */}
-        {attempt.violations.length > 0 && (
-          <div className="card" style={{ padding: 20, border: '1px solid var(--color-error)', background: 'var(--color-error-light)' }}>
-            <p style={{ fontSize: '0.875rem', fontWeight: 800, margin: '0 0 8px', color: 'var(--color-error)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <AlertCircle size={16} /> Security Violations Recorded ({attempt.violations.length})
-            </p>
-            {attempt.violations.map((v, i) => (
-              <div key={i} style={{ fontSize: '0.8125rem', color: 'var(--color-error)', padding: '2px 0' }}>
-                • {v.description}
-              </div>
-            ))}
-          </div>
-        )}
-
         {/* Question Breakdown Accordion */}
         <div className="card" style={{ overflow: 'hidden' }}>
           <button

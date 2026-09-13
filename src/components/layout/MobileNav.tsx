@@ -38,12 +38,15 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
           top: 0,
           left: 0,
           bottom: 0,
-          width: 'min(var(--sidebar-width, 240px), 85vw)',
+          height: '100dvh',
+          maxHeight: '100dvh',
+          width: 'min(var(--sidebar-width, 260px), 85vw)',
           maxWidth: '85vw',
           zIndex: 201,
           animation: 'slide-in-left 250ms ease forwards',
           display: 'flex',
           flexDirection: 'column',
+          overflow: 'hidden',
         }}
         role="dialog"
         aria-modal="true"
