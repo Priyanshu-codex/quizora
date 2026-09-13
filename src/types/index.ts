@@ -39,7 +39,7 @@ export interface Quiz {
   status: QuizStatus;
   maxViolations: number;
   fullscreenRequired: boolean;
-  createdBy: string;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
   attemptCount: number;

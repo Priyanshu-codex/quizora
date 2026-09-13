@@ -52,12 +52,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setMobileNavOpen(false);
   }, [pathname]);
 
-  // Render clean, branded Quizora loading shell while auth state initializes
-  if (!isInitialized || isLoading) {
+  // Render clean, branded Quizora loading shell while auth state initializes or redirects
+  if (!isInitialized || isLoading || !isAuthenticated || !user) {
     return <QuizoraLoader message="Preparing your quiz space…" />;
   }
-
-  if (!isAuthenticated || !user) return null;
 
   const { title, subtitle } = getPageTitle(pathname);
 

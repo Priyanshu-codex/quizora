@@ -1,40 +1,28 @@
 import { User } from '@/types';
 
-export const DEMO_ADMIN_ID = 'a1111111-1111-4111-a111-111111111111';
-export const DEMO_VIEWER_ID = 'b2222222-2222-4222-b222-222222222222';
-export const DEMO_USER_ID = 'c3333333-3333-4333-c333-333333333333';
-
 export const mockUsers: User[] = [
   {
-    id: DEMO_ADMIN_ID,
-    name: 'Priyanshu Sharma',
+    id: '3c8a7095-ae6a-4e63-bf6a-97c8ce785c46',
+    name: 'Kranti Jain',
     email: 'admin@quizora.dev',
     role: 'admin',
     avatar: undefined,
-    createdAt: '2024-01-01T00:00:00Z',
+    createdAt: '2026-09-13T14:11:01.40622+00:00',
   },
   {
-    id: DEMO_VIEWER_ID,
+    id: 'e14992f0-40c0-4557-a3f6-d133acbe198e',
     name: 'Ananya Singh',
     email: 'viewer@quizora.dev',
     role: 'viewer',
     avatar: undefined,
-    createdAt: '2024-01-02T00:00:00Z',
+    createdAt: '2026-09-13T14:13:42.44787+00:00',
   },
   {
-    id: DEMO_USER_ID,
+    id: 'a02f7231-ae49-45ac-89f4-eb4a1dea7eae',
     name: 'Aarav Sharma',
     email: 'user@quizora.dev',
     role: 'user',
     avatar: undefined,
-    createdAt: '2024-01-03T00:00:00Z',
+    createdAt: '2026-09-13T14:13:42.705122+00:00',
   },
 ];
-
-export const AUTH_ACCOUNTS = {
-  admin: { email: 'admin@quizora.dev', password: 'Admin@csit', role: 'admin' as const },
-  viewer: { email: 'viewer@quizora.dev', password: 'Viewer@csit', role: 'viewer' as const },
-  user: { email: 'user@quizora.dev', password: 'User@csit123', role: 'user' as const },
-};
-
-export const DEMO_CREDENTIALS = AUTH_ACCOUNTS;

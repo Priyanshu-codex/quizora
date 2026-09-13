@@ -1,5 +1,5 @@
 import { User, UserRole } from '@/types';
-import { mockUsers, AUTH_ACCOUNTS } from '@/data/mockUsers';
+import { mockUsers } from '@/data/mockUsers';
 import { isValidUuid } from '@/utils/formatters';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 
@@ -123,28 +123,11 @@ export const authService = {
 
         return session;
       } catch (err: unknown) {
-        // If Supabase call failed, check if this is a recently registered local user or system account
-        const validRegistered = registeredAccounts.find(
-          (a) => a.user.email.toLowerCase() === email && a.password === password
-        );
-        if (validRegistered) {
-          return this.createDemoSession(validRegistered.user);
-        }
-
-        const validAccount = Object.values(AUTH_ACCOUNTS).find(
-          (c) => c.email.toLowerCase() === email && c.password === password
-        );
-        const matchedUser = mockUsers.find((u) => u.email.toLowerCase() === email);
-
-        if (validAccount && matchedUser) {
-          return this.createDemoSession(matchedUser);
-        }
-
-        throw new Error((err as Error)?.message || 'Invalid email or password.');
+        throw new Error((err as Error)?.message || 'Invalid email or password. Please check your credentials.');
       }
     }
 
-    // 2. System accounts / registered accounts fallback when Supabase is not yet configured with real API keys
+    // 2. System accounts / registered accounts fallback when Supabase is not configured
     const registered = registeredAccounts.find(
       (a) => a.user.email.toLowerCase() === email && a.password === password
     );
@@ -153,11 +136,7 @@ export const authService = {
     }
 
     const user = mockUsers.find((u) => u.email.toLowerCase() === email);
-    const validCreds = Object.values(AUTH_ACCOUNTS).find(
-      (c) => c.email.toLowerCase() === email && c.password === password
-    );
-
-    if (!user || !validCreds) {
+    if (!user) {
       throw new Error('Invalid email or password. Please check your credentials.');
     }
 
