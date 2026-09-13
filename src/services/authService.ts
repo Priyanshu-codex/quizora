@@ -30,6 +30,8 @@ interface RegisteredAccount {
 
 const registeredAccounts: RegisteredAccount[] = [];
 
+const inFlightSignUps = new Map<string, Promise<AuthSession>>();
+
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthSession> {
     const email = credentials.email.trim().toLowerCase();
@@ -181,63 +183,56 @@ export const authService = {
     const role: UserRole = data.role || 'user';
     const name = data.name.trim();
 
-    if (isSupabaseConfigured()) {
+    // 1. In-flight promise deduplication: prevent concurrent duplicate requests for the same email
+    const existingPromise = inFlightSignUps.get(email);
+    if (existingPromise) {
+      return existingPromise;
+    }
+
+    const signUpPromise = (async (): Promise<AuthSession> => {
       try {
-        const { data: authResult, error } = await supabase.auth.signUp({
-          email,
-          password: data.password,
-          options: {
-            data: {
-              name,
-              role,
-            },
-          },
-        });
-
-        if (error) {
-          throw new Error(error.message || 'Unable to register account. Please try again.');
-        }
-
-        if (authResult.user) {
-          // Ensure profile exists in public.profiles
-          try {
-            await supabase.from('profiles').upsert({
-              id: authResult.user.id,
-              name,
+        // 2. In browser environment with Supabase configured, use pre-confirmed server signup route
+        if (typeof window !== 'undefined' && isSupabaseConfigured()) {
+          const response = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
               email,
+              password: data.password,
+              name,
               role,
-            });
-          } catch {
-            // Handled or non-blocking
+            }),
+          });
+
+          const resData = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            const errorMsg = resData?.error || 'Unable to register account. Please try again.';
+            throw new Error(errorMsg);
           }
 
-          // Immediately sign in if session was not returned, bypassing email confirmation requirement
-          let token = authResult.session?.access_token;
-          if (!token) {
-            try {
-              const { data: signInData } = await supabase.auth.signInWithPassword({
-                email,
-                password: data.password,
-              });
-              if (signInData?.session) {
-                token = signInData.session.access_token;
-              }
-            } catch {
-              // Non-blocking fallback
-            }
+          // 3. User created and auto-confirmed without triggering verification emails.
+          // Now sign in immediately via Supabase Auth to establish valid browser session & JWT
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password: data.password,
+          });
+
+          if (signInError) {
+            throw new Error(signInError.message || 'Account created, but failed to log in automatically.');
           }
 
           const user: User = {
-            id: authResult.user.id,
-            name,
-            email,
-            role,
-            createdAt: authResult.user.created_at || new Date().toISOString(),
+            id: signInData.user.id,
+            name: (signInData.user.user_metadata?.name as string) || name,
+            email: signInData.user.email || email,
+            role: (signInData.user.user_metadata?.role as UserRole) || role,
+            createdAt: signInData.user.created_at || new Date().toISOString(),
           };
 
           const session: AuthSession = {
             user,
-            token: token || `token-${user.id}-${Date.now()}`,
+            token: signInData.session?.access_token || `token-${user.id}-${Date.now()}`,
             expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
           };
 
@@ -249,24 +244,103 @@ export const authService = {
 
           return session;
         }
-      } catch (err: unknown) {
-        if (err instanceof Error && !err.message.includes('network') && !err.message.includes('fetch')) {
-          throw err;
+
+        // 4. Server/fallback path if fetch is not available (e.g. CLI/tests)
+        if (isSupabaseConfigured()) {
+          try {
+            const { data: authResult, error } = await supabase.auth.signUp({
+              email,
+              password: data.password,
+              options: {
+                data: {
+                  name,
+                  role,
+                },
+              },
+            });
+
+            if (error) {
+              const msg = error.message.toLowerCase();
+              if (msg.includes('rate limit') || error.status === 429) {
+                throw new Error('Registration rate limit reached. Please wait a few moments before trying again.');
+              }
+              throw new Error(error.message || 'Unable to register account. Please try again.');
+            }
+
+            if (authResult.user) {
+              try {
+                await supabase.from('profiles').upsert({
+                  id: authResult.user.id,
+                  name,
+                  email,
+                  role,
+                });
+              } catch {
+                // Non-blocking
+              }
+
+              let token = authResult.session?.access_token;
+              if (!token) {
+                try {
+                  const { data: signInData } = await supabase.auth.signInWithPassword({
+                    email,
+                    password: data.password,
+                  });
+                  if (signInData?.session) {
+                    token = signInData.session.access_token;
+                  }
+                } catch {
+                  // Fallback
+                }
+              }
+
+              const user: User = {
+                id: authResult.user.id,
+                name,
+                email,
+                role,
+                createdAt: authResult.user.created_at || new Date().toISOString(),
+              };
+
+              const session: AuthSession = {
+                user,
+                token: token || `token-${user.id}-${Date.now()}`,
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              };
+
+              registeredAccounts.push({ user, password: data.password });
+
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+              }
+
+              return session;
+            }
+          } catch (err: unknown) {
+            if (err instanceof Error && !err.message.includes('network') && !err.message.includes('fetch')) {
+              throw err;
+            }
+          }
         }
+
+        // Local registration fallback — immediate login without email verification
+        const newUser: User = {
+          id: `u-${Date.now()}`,
+          name,
+          email,
+          role,
+          createdAt: new Date().toISOString(),
+        };
+
+        registeredAccounts.push({ user: newUser, password: data.password });
+        return this.createDemoSession(newUser);
+      } finally {
+        inFlightSignUps.delete(email);
       }
-    }
+    })();
 
-    // Local registration fallback — immediate login without email verification
-    const newUser: User = {
-      id: `u-${Date.now()}`,
-      name,
-      email,
-      role,
-      createdAt: new Date().toISOString(),
-    };
-
-    registeredAccounts.push({ user: newUser, password: data.password });
-    return this.createDemoSession(newUser);
+    inFlightSignUps.set(email, signUpPromise);
+    return signUpPromise;
   },
 
   async logout(): Promise<void> {
