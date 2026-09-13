@@ -74,7 +74,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { title, subtitle } = getPageTitle(pathname);
 
   return (
-    <div style={{ display: 'flex', minHeight: '100dvh', background: 'var(--bg-app)' }}>
+    <div
+      style={{
+        display: 'flex',
+        height: '100dvh',
+        maxHeight: '100dvh',
+        width: '100vw',
+        maxWidth: '100%',
+        overflow: 'hidden',
+        background: 'var(--bg-app)',
+      }}
+    >
       {/* Desktop sidebar */}
       <div className="sidebar-wrapper">
         <Sidebar />
@@ -84,7 +94,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <MobileNav isOpen={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
 
       {/* Main content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          height: '100%',
+          overflow: 'hidden',
+        }}
+      >
         <Header
           title={title}
           subtitle={subtitle}
@@ -98,7 +117,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       <style>{`
-        .sidebar-wrapper { display: block; }
+        .sidebar-wrapper {
+          display: block;
+          width: var(--sidebar-width);
+          flex-shrink: 0;
+          height: 100dvh;
+          position: sticky;
+          top: 0;
+          z-index: 40;
+        }
         @media (max-width: 1024px) {
           .sidebar-wrapper { display: none; }
         }

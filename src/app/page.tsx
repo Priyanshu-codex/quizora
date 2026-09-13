@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import { Zap, ArrowRight, ShieldCheck, Award, Clock, CheckCircle2, Sparkles, BookOpen, ChevronRight } from 'lucide-react';
 import ProgressRing from '@/components/quiz/ProgressRing';

@@ -52,7 +52,7 @@ export const authService = {
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
-          .single();
+          .maybeSingle();
 
         if (profile) {
           userRole = (profile.role as UserRole) || 'user';
@@ -66,7 +66,11 @@ export const authService = {
             email: data.user.email || email,
             role: (data.user.user_metadata?.role as UserRole) || 'user',
           };
-          await supabase.from('profiles').insert(newProfile).select().single().catch(() => {});
+          try {
+            await supabase.from('profiles').insert(newProfile).select().maybeSingle();
+          } catch {
+            // Profile trigger or insert handled
+          }
           userRole = newProfile.role;
         }
 
@@ -158,12 +162,16 @@ export const authService = {
       }
 
       // Ensure profile exists in public.profiles
-      await supabase.from('profiles').upsert({
-        id: authResult.user.id,
-        name,
-        email,
-        role,
-      }).catch(() => {});
+      try {
+        await supabase.from('profiles').upsert({
+          id: authResult.user.id,
+          name,
+          email,
+          role,
+        });
+      } catch {
+        // Handled or non-blocking
+      }
 
       const user: User = {
         id: authResult.user.id,
@@ -242,5 +250,72 @@ export const authService = {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
       if (error) throw new Error(error.message);
     }
+  },
+
+  async updateName(userId: string, newName: string): Promise<User> {
+    const trimmed = newName.trim();
+    if (!trimmed) {
+      throw new Error('Name cannot be empty.');
+    }
+    if (trimmed.length < 2) {
+      throw new Error('Name must be at least 2 characters.');
+    }
+    if (trimmed.length > 60) {
+      throw new Error('Name cannot exceed 60 characters.');
+    }
+
+    let updatedUser: User | null = null;
+
+    if (isSupabaseConfigured()) {
+      try {
+        await supabase.auth.updateUser({
+          data: { name: trimmed },
+        });
+      } catch {
+        // Non-blocking if auth user metadata update fails
+      }
+
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .update({ name: trimmed })
+        .eq('id', userId)
+        .select()
+        .maybeSingle();
+
+      if (error) {
+        throw new Error(error.message || 'Failed to update name in Supabase profile.');
+      }
+
+      const session = this.getSession();
+      if (session) {
+        updatedUser = {
+          ...session.user,
+          name: profile?.name || trimmed,
+        };
+      }
+    }
+
+    const session = this.getSession();
+    if (session) {
+      updatedUser = {
+        ...session.user,
+        name: trimmed,
+      };
+      session.user = updatedUser;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+      }
+    }
+
+    const mock = mockUsers.find((u) => u.id === userId || u.email === session?.user.email);
+    if (mock) {
+      mock.name = trimmed;
+    }
+
+    if (!updatedUser) {
+      throw new Error('No active user session found to update.');
+    }
+
+    return updatedUser;
   },
 };

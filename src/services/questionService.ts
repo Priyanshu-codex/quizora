@@ -80,7 +80,7 @@ export const questionService = {
           .select('*')
           .order('order_num', { ascending: true });
 
-        if (!error && data) {
+        if (!error && data && data.length > 0) {
           return (data as SupabaseQuestionRow[]).map(mapRowToQuestion);
         }
       } catch {
@@ -98,7 +98,7 @@ export const questionService = {
           .from('questions')
           .select('*')
           .eq('id', id)
-          .single();
+          .maybeSingle();
 
         if (!error && data) {
           return mapRowToQuestion(data as SupabaseQuestionRow);
@@ -125,7 +125,7 @@ export const questionService = {
           .from('questions')
           .insert(row)
           .select()
-          .single();
+          .maybeSingle();
 
         if (!error && inserted) {
           const created = mapRowToQuestion(inserted as SupabaseQuestionRow);
@@ -167,7 +167,7 @@ export const questionService = {
           .update(row)
           .eq('id', id)
           .select()
-          .single();
+          .maybeSingle();
 
         if (!error && updatedRow) {
           const saved = mapRowToQuestion(updatedRow as SupabaseQuestionRow);

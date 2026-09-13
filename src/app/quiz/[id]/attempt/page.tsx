@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Flag, Send, Grid3X3, AlertTriangle, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Send, Grid3X3, Lock, Maximize2, X } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { quizService } from '@/services/quizService';
 import { questionService } from '@/services/questionService';
@@ -25,17 +25,17 @@ export default function QuizAttemptPage({ params }: Props) {
   const [answers, setAnswers] = useState<AttemptAnswer[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(0);
-  const [violations, setViolations] = useState(0);
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
   const [submitModalOpen, setSubmitModalOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
-  const [violationAlert, setViolationAlert] = useState('');
   const [attemptId, setAttemptId] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [isTestLocked, setIsTestLocked] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submitRef = useRef(false);
+  const isResumingRef = useRef(false);
 
   const handleAutoSubmit = useCallback(async () => {
     if (submitRef.current) return;
@@ -53,19 +53,32 @@ export default function QuizAttemptPage({ params }: Props) {
   const recordViolation = useCallback(async (type: ViolationRecord['type'], description: string) => {
     if (submitRef.current) return;
     const rec: ViolationRecord = { type, timestamp: new Date().toISOString(), description };
-    setViolations((prevCount) => {
-      const newCount = prevCount + 1;
-      if (attemptId) attemptService.recordViolation(attemptId, rec);
+    if (attemptId) {
+      attemptService.recordViolation(attemptId, rec);
+    }
 
-      setViolationAlert(description);
-      setTimeout(() => setViolationAlert(''), 4500);
-
-      if (quiz && newCount >= quiz.maxViolations) {
-        setTimeout(() => handleAutoSubmit(), 1200);
-      }
-      return newCount;
-    });
+    const active = attemptService.getActiveAttempt();
+    const violationCount = active?.violations.length || 1;
+    if (quiz && violationCount >= quiz.maxViolations) {
+      setTimeout(() => handleAutoSubmit(), 1200);
+    }
   }, [attemptId, quiz, handleAutoSubmit]);
+
+  const resumeTest = async () => {
+    isResumingRef.current = true;
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
+      // Proceed if browser restricts fullscreen
+    }
+    setIsTestLocked(false);
+    window.focus();
+    setTimeout(() => {
+      isResumingRef.current = false;
+    }, 400);
+  };
 
   // Init
   useEffect(() => {
@@ -84,7 +97,6 @@ export default function QuizAttemptPage({ params }: Props) {
         if (active && active.quizId === id) {
           setAttemptId(active.id);
           setAnswers(active.answers);
-          setViolations(active.violations.length);
         } else if (user) {
           try {
             const newAttempt = await attemptService.startAttempt(user.id, id);
@@ -98,9 +110,9 @@ export default function QuizAttemptPage({ params }: Props) {
     });
   }, [params, user, router]);
 
-  // Timer countdown
+  // Timer countdown - paused when test is locked
   useEffect(() => {
-    if (loading || submitted || secondsLeft <= 0) return;
+    if (loading || submitted || secondsLeft <= 0 || isTestLocked) return;
     timerRef.current = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
@@ -115,61 +127,128 @@ export default function QuizAttemptPage({ params }: Props) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [loading, submitted, secondsLeft, handleAutoSubmit]);
+  }, [loading, submitted, secondsLeft, isTestLocked, handleAutoSubmit]);
 
-  // Fullscreen enforcement
+  // Automatic fullscreen request on initial load
   useEffect(() => {
-    if (loading || !quiz?.fullscreenRequired || submitted) return;
-    const enterFS = async () => {
+    if (loading || submitted) return;
+
+    const requestInitialFullscreen = async () => {
       try {
         if (!document.fullscreenElement) {
           await document.documentElement.requestFullscreen();
         }
       } catch {
-        // FS request denied or unallowed
+        // When browser requires direct user interaction for fullscreen, show Test Lock screen
+        setIsTestLocked(true);
       }
     };
-    enterFS();
+
+    requestInitialFullscreen();
+  }, [loading, submitted]);
+
+  // Fullscreen, tab switch, and window blur detection
+  useEffect(() => {
+    if (loading || submitted) return;
 
     const onFSChange = () => {
-      if (!document.fullscreenElement && !submitRef.current) {
+      if (submitRef.current || isResumingRef.current) return;
+      if (!document.fullscreenElement) {
+        setIsTestLocked(true);
         recordViolation('fullscreen_exit', 'Exited fullscreen mode');
       }
     };
-    document.addEventListener('fullscreenchange', onFSChange);
-    return () => document.removeEventListener('fullscreenchange', onFSChange);
-  }, [loading, quiz, submitted, recordViolation]);
 
-  // Visibility change (tab switch)
-  useEffect(() => {
-    if (loading || submitted) return;
     const onVisChange = () => {
-      if (document.hidden && !submitRef.current) {
+      if (submitRef.current || isResumingRef.current) return;
+      if (document.hidden) {
+        setIsTestLocked(true);
         recordViolation('tab_switch', 'Switched tab or window');
       }
     };
+
+    const onBlur = () => {
+      if (submitRef.current || isResumingRef.current) return;
+      setIsTestLocked(true);
+      recordViolation('window_blur', 'Window lost focus');
+    };
+
+    document.addEventListener('fullscreenchange', onFSChange);
     document.addEventListener('visibilitychange', onVisChange);
-    return () => document.removeEventListener('visibilitychange', onVisChange);
+    window.addEventListener('blur', onBlur);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', onFSChange);
+      document.removeEventListener('visibilitychange', onVisChange);
+      window.removeEventListener('blur', onBlur);
+    };
   }, [loading, submitted, recordViolation]);
 
-  // Window blur
+  // Prevent copy, paste, text selection, drag/drop, right-click, and inspection shortcuts
   useEffect(() => {
     if (loading || submitted) return;
-    const onBlur = () => {
-      if (!submitRef.current) recordViolation('window_blur', 'Window lost focus');
-    };
-    window.addEventListener('blur', onBlur);
-    return () => window.removeEventListener('blur', onBlur);
-  }, [loading, submitted, recordViolation]);
 
-  // Beforeunload
-  useEffect(() => {
-    const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (!submitRef.current) { e.preventDefault(); }
+    const preventDefault = (e: Event) => e.preventDefault();
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      // Prevent copy, paste, cut, select-all, print, save, view-source shortcuts
+      if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'x', 'a', 'p', 'u', 's'].includes(key)) {
+        e.preventDefault();
+      }
+      // Prevent F12 and DevTools inspection shortcuts
+      if (
+        e.key === 'F12' ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && ['i', 'j', 'c'].includes(key))
+      ) {
+        e.preventDefault();
+      }
     };
+
+    document.addEventListener('contextmenu', preventDefault);
+    document.addEventListener('copy', preventDefault);
+    document.addEventListener('cut', preventDefault);
+    document.addEventListener('paste', preventDefault);
+    document.addEventListener('selectstart', preventDefault);
+    document.addEventListener('dragstart', preventDefault);
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('contextmenu', preventDefault);
+      document.removeEventListener('copy', preventDefault);
+      document.removeEventListener('cut', preventDefault);
+      document.removeEventListener('paste', preventDefault);
+      document.removeEventListener('selectstart', preventDefault);
+      document.removeEventListener('dragstart', preventDefault);
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [loading, submitted]);
+
+  // Lock within test session (prevent back navigation and accidental tab close)
+  useEffect(() => {
+    if (submitted) return;
+    window.history.pushState(null, '', window.location.href);
+
+    const onPopState = () => {
+      window.history.pushState(null, '', window.location.href);
+    };
+
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!submitRef.current) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('popstate', onPopState);
     window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, []);
+
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener('beforeunload', onBeforeUnload);
+    };
+  }, [submitted]);
 
   const handleSelect = async (questionId: string, answer: string | string[]) => {
     setAnswers((prev) => {
@@ -234,7 +313,7 @@ export default function QuizAttemptPage({ params }: Props) {
   const LETTER = ['A', 'B', 'C', 'D', 'E'];
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--bg-app)', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--bg-app)', display: 'flex', flexDirection: 'column', userSelect: 'none', WebkitUserSelect: 'none' }}>
       {/* ── TOP TESTING ENVIRONMENT HEADER ── */}
       <header
         style={{
@@ -266,7 +345,7 @@ export default function QuizAttemptPage({ params }: Props) {
           </div>
 
           <Timer secondsLeft={secondsLeft} totalSeconds={quiz.duration * 60} />
-          <SecurityStatus violations={violations} maxViolations={quiz.maxViolations} />
+          <SecurityStatus />
 
           <button
             className="btn btn-ghost btn-icon mobile-only"
@@ -278,26 +357,103 @@ export default function QuizAttemptPage({ params }: Props) {
         </div>
       </header>
 
-      {/* Violation Alert Banner */}
-      {violationAlert && (
+      {/* ── TEST LOCK MODE PAUSED OVERLAY ── */}
+      {isTestLocked && !submitted && (
         <div
           style={{
-            background: 'var(--color-error-light)',
-            borderBottom: '1px solid var(--color-error)',
-            padding: '12px 24px',
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            background: 'rgba(15, 23, 42, 0.95)',
+            backdropFilter: 'blur(12px)',
             display: 'flex',
             alignItems: 'center',
-            gap: 12,
+            justifyContent: 'center',
+            padding: 24,
             animation: 'fade-in 200ms ease',
           }}
         >
-          <AlertTriangle size={18} style={{ color: 'var(--color-error)', flexShrink: 0 }} />
-          <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--color-error)', flex: 1 }}>
-            Security Warning: {violationAlert}
-          </span>
-          <button onClick={() => setViolationAlert('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-error)', padding: 2 }}>
-            <X size={16} />
-          </button>
+          <div
+            className="card"
+            style={{
+              maxWidth: 480,
+              width: '100%',
+              padding: 'clamp(28px, 5vw, 40px)',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 20,
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-2xl)',
+              background: 'var(--bg-surface)',
+            }}
+          >
+            <div
+              style={{
+                width: 64,
+                height: 64,
+                borderRadius: '50%',
+                background: 'var(--color-primary-light)',
+                border: '2px solid var(--color-primary-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--color-primary)',
+              }}
+            >
+              <Lock size={30} />
+            </div>
+
+            <div>
+              <h2
+                style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: '1.375rem',
+                  fontWeight: 800,
+                  color: 'var(--text-primary)',
+                  margin: '0 0 10px',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Test Session Paused
+              </h2>
+              <p
+                style={{
+                  fontSize: '0.875rem',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.6,
+                  margin: 0,
+                }}
+              >
+                <strong>Test Lock Mode is active.</strong> Your assessment was paused because the test window lost focus, you switched tabs, or fullscreen mode was exited.
+              </p>
+            </div>
+
+            <div
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                borderRadius: 'var(--radius-lg)',
+                background: 'var(--bg-slate)',
+                border: '1px solid var(--border)',
+                fontSize: '0.8125rem',
+                color: 'var(--text-muted)',
+                lineHeight: 1.5,
+              }}
+            >
+              To maintain exam integrity, you must remain in fullscreen and keep this test window active. Your assessment timer has been paused.
+            </div>
+
+            <button
+              className="btn btn-primary btn-xl"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={resumeTest}
+            >
+              <Maximize2 size={18} /> Resume Test &amp; Enter Fullscreen
+            </button>
+          </div>
         </div>
       )}
 
@@ -493,6 +649,16 @@ export default function QuizAttemptPage({ params }: Props) {
       </Modal>
 
       <style>{`
+        * {
+          -webkit-user-select: none !important;
+          -moz-user-select: none !important;
+          -ms-user-select: none !important;
+          user-select: none !important;
+        }
+        input, textarea {
+          -webkit-user-select: auto !important;
+          user-select: auto !important;
+        }
         .mobile-hidden { display: flex; }
         .mobile-only   { display: none !important; }
         .palette-desktop { display: block; }

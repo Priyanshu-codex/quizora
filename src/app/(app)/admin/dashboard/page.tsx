@@ -7,6 +7,7 @@ import { quizService } from '@/services/quizService';
 import { Quiz } from '@/types';
 import StatCard from '@/components/shared/StatCard';
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
 
 interface AdminSummaryData {
   totalQuizzes: number;
@@ -18,6 +19,7 @@ interface AdminSummaryData {
 }
 
 export default function AdminDashboardPage() {
+  const { user } = useAuth();
   const [summary, setSummary] = useState<AdminSummaryData | null>(null);
   const [analytics, setAnalytics] = useState<QuizAnalytics[]>([]);
   const [recentQuizzes, setRecentQuizzes] = useState<Quiz[]>([]);
@@ -77,7 +79,7 @@ export default function AdminDashboardPage() {
             </span>
           </div>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', fontWeight: 800, margin: 0, letterSpacing: '-0.025em', color: 'var(--text-primary)' }}>
-            Welcome back, Administrator
+            Good to see you, {user?.name || 'Administrator'}!
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0 }}>
             Real-time assessment platform activity and participant metrics.

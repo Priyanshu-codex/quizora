@@ -308,9 +308,9 @@ export default function Header({ title, subtitle, onMenuClick }: HeaderProps) {
                 <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{user.email}</p>
               </div>
 
-              {user.role === 'admin' && (
+              {(user.role === 'admin' || user.role === 'viewer') && (
                 <Link
-                  href="/admin/settings"
+                  href={user.role === 'admin' ? '/admin/settings' : '/viewer/settings'}
                   onClick={() => setShowProfileMenu(false)}
                   style={{
                     display: 'flex',
@@ -326,7 +326,7 @@ export default function Header({ title, subtitle, onMenuClick }: HeaderProps) {
                   className="dropdown-item-hover"
                 >
                   <Settings size={16} style={{ color: 'var(--color-primary)' }} />
-                  <span>Admin Settings</span>
+                  <span>{user.role === 'admin' ? 'Admin Settings' : 'Settings'}</span>
                 </Link>
               )}
 

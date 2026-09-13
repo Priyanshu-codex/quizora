@@ -14,6 +14,7 @@ interface AuthContextValue {
   login: (credentials: LoginCredentials) => Promise<void>;
   signUp: (data: SignUpData) => Promise<void>;
   logout: () => Promise<void>;
+  updateName: (newName: string) => Promise<User>;
   role: UserRole | null;
 }
 
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .from('profiles')
             .select('*')
             .eq('id', sbSession.user.id)
-            .single();
+            .maybeSingle();
 
           const updatedUser: User = {
             id: sbSession.user.id,
@@ -90,6 +91,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
+  const updateName = useCallback(async (newName: string): Promise<User> => {
+    if (!user) throw new Error('No authenticated user.');
+    const updated = await authService.updateName(user.id, newName);
+    setUser(updated);
+    return updated;
+  }, [user]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -100,6 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         signUp,
         logout,
+        updateName,
         role: user?.role ?? null,
       }}
     >
