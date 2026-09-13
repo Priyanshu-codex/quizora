@@ -14,20 +14,29 @@ import Link from 'next/link';
 
 export default function UserDashboardPage() {
   const { user } = useAuth();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [attempts, setAttempts] = useState<Attempt[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [quizzes, setQuizzes] = useState<Quiz[]>(() => quizService.getCachedPublished());
+  const [attempts, setAttempts] = useState<Attempt[]>(() => (user ? attemptService.getCachedByUserId(user.id) : []));
+  const [loading, setLoading] = useState(() => {
+    const cached = quizService.getCachedPublished();
+    return cached.length === 0;
+  });
 
   useEffect(() => {
     if (!user) return;
+    let isMounted = true;
     Promise.all([
       quizService.getPublished(),
       attemptService.getByUserId(user.id),
     ]).then(([q, a]) => {
-      setQuizzes(q);
-      setAttempts(a);
-      setLoading(false);
+      if (isMounted) {
+        setQuizzes(q);
+        setAttempts(a);
+        setLoading(false);
+      }
     });
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   if (!user) return null;
@@ -85,7 +94,7 @@ export default function UserDashboardPage() {
         <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', gap: 8, maxWidth: 640 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span className="badge badge-primary" style={{ fontSize: '0.75rem', padding: '4px 10px', fontWeight: 700 }}>
-              {getGreeting()}, {user.name.split(' ')[0]}!
+              {getGreeting(user.name || 'Student')}
             </span>
           </div>
           <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(1.5rem, 3.5vw, 2.25rem)', fontWeight: 800, margin: '4px 0 0', letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>

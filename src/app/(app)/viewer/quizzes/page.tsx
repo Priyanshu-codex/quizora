@@ -10,13 +10,22 @@ import EmptyState from '@/components/ui/EmptyState';
 import { BookOpen } from 'lucide-react';
 
 export default function ViewerQuizzesPage() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>(() => quizService.getCachedAll());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => quizService.getCachedAll().length === 0);
 
   useEffect(() => {
-    quizService.getAll().then((q) => { setQuizzes(q); setLoading(false); });
+    let isMounted = true;
+    quizService.getAll().then((q) => {
+      if (isMounted) {
+        setQuizzes(q);
+        setLoading(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filtered = quizzes.filter((q) => {

@@ -25,7 +25,7 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n1',
     title: 'New Quiz Published',
-    message: 'React & Next.js Architecture Quiz is now live for participants.',
+    message: 'Demo Quiz 1: Modern Web Engineering is live for participants.',
     time: '10m ago',
     read: false,
     type: 'info',
@@ -33,18 +33,18 @@ const INITIAL_NOTIFICATIONS: NotificationItem[] = [
   {
     id: 'n2',
     title: 'High Score Achieved',
-    message: 'Alex Johnson scored 100% on System Design & Cloud Fundamentals.',
+    message: 'Aarav Sharma completed Demo Quiz 2: Data Structures & Algorithms.',
     time: '1h ago',
     read: false,
     type: 'success',
   },
   {
     id: 'n3',
-    title: 'Security Alert',
-    message: 'Proctoring logged 1 tab-switch flag in attempt #1042.',
+    title: 'Proctoring Security',
+    message: 'Test Lock mode enabled for all published quizzes.',
     time: '3h ago',
     read: true,
-    type: 'warning',
+    type: 'info',
   },
 ];
 

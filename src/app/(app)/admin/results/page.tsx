@@ -11,20 +11,32 @@ import EmptyState from '@/components/ui/EmptyState';
 import { FileText } from 'lucide-react';
 
 export default function AdminResultsPage() {
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [quizMap, setQuizMap] = useState<Record<string, Quiz>>({});
+  const [participants, setParticipants] = useState<Participant[]>(() =>
+    participantService.getCachedAll().filter((x) => x.status === 'completed' || x.status === 'auto_submitted')
+  );
+  const [quizMap, setQuizMap] = useState<Record<string, Quiz>>(() => {
+    const map: Record<string, Quiz> = {};
+    quizService.getCachedAll().forEach((quiz) => { map[quiz.id] = quiz; });
+    return map;
+  });
   const [search, setSearch] = useState('');
   const [quizFilter, setQuizFilter] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => participantService.getCachedAll().length === 0);
 
   useEffect(() => {
+    let isMounted = true;
     Promise.all([participantService.getAll(), quizService.getAll()]).then(([p, q]) => {
-      setParticipants(p.filter((x) => x.status === 'completed' || x.status === 'auto_submitted'));
-      const map: Record<string, Quiz> = {};
-      q.forEach((quiz) => { map[quiz.id] = quiz; });
-      setQuizMap(map);
-      setLoading(false);
+      if (isMounted) {
+        setParticipants(p.filter((x) => x.status === 'completed' || x.status === 'auto_submitted'));
+        const map: Record<string, Quiz> = {};
+        q.forEach((quiz) => { map[quiz.id] = quiz; });
+        setQuizMap(map);
+        setLoading(false);
+      }
     });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const quizzes = Object.values(quizMap);

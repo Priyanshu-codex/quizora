@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { AttemptAnswer, Question } from '@/types';
 
 interface QuestionPaletteProps {
@@ -26,7 +27,7 @@ function getState(
   return 'unanswered';
 }
 
-export default function QuestionPalette({ questions, answers, currentIndex, onJump }: QuestionPaletteProps) {
+function QuestionPalette({ questions, answers, currentIndex, onJump }: QuestionPaletteProps) {
   const legend = [
     { state: 'current' as QState, label: 'Current' },
     { state: 'answered' as QState, label: 'Answered' },
@@ -74,3 +75,5 @@ export default function QuestionPalette({ questions, answers, currentIndex, onJu
     </div>
   );
 }
+
+export default memo(QuestionPalette);

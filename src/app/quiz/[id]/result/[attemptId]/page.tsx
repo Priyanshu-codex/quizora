@@ -9,12 +9,14 @@ import { questionService } from '@/services/questionService';
 import { Attempt, Quiz, Question } from '@/types';
 import ProgressRing from '@/components/quiz/ProgressRing';
 import { formatTimeTaken } from '@/utils/formatters';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 
 interface Props { params: Promise<{ id: string; attemptId: string }> }
 
 export default function ResultPage({ params }: Props) {
   const router = useRouter();
+  const { user, isAuthenticated, isLoading: authLoading, isInitialized } = useAuth();
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -22,19 +24,36 @@ export default function ResultPage({ params }: Props) {
   const [showBreakdown, setShowBreakdown] = useState(false);
 
   useEffect(() => {
+    if (isInitialized && !authLoading) {
+      if (!isAuthenticated) {
+        router.replace('/login');
+      }
+    }
+  }, [isInitialized, authLoading, isAuthenticated, router]);
+
+  useEffect(() => {
+    if (!isInitialized || authLoading || !isAuthenticated || !user) return;
+
     params.then(async ({ id, attemptId }) => {
       const [att, q] = await Promise.all([
         attemptService.getById(attemptId),
         quizService.getById(id),
       ]);
       if (!att || !q) { router.replace('/user/results'); return; }
+
+      // Role check: participants can only view their own attempts
+      if (user.role === 'user' && att.userId !== user.id) {
+        router.replace('/user/results');
+        return;
+      }
+
       const qs = await questionService.getByQuizId(id);
       setAttempt(att);
       setQuiz(q);
       setQuestions(qs);
       setLoading(false);
     });
-  }, [params, router]);
+  }, [params, router, isInitialized, authLoading, isAuthenticated, user]);
 
   if (loading) {
     return (

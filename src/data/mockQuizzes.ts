@@ -1,4 +1,5 @@
 import { Quiz } from '@/types';
+import { DEMO_ADMIN_ID } from './mockUsers';
 
 export const mockQuizzes: Quiz[] = [
   {
@@ -14,7 +15,7 @@ export const mockQuizzes: Quiz[] = [
     status: 'published',
     maxViolations: 3,
     fullscreenRequired: true,
-    createdBy: 'user-1',
+    createdBy: DEMO_ADMIN_ID,
     createdAt: '2024-02-01T09:00:00Z',
     updatedAt: '2024-02-15T10:00:00Z',
     attemptCount: 0,
@@ -32,7 +33,7 @@ export const mockQuizzes: Quiz[] = [
     status: 'published',
     maxViolations: 3,
     fullscreenRequired: true,
-    createdBy: 'user-1',
+    createdBy: DEMO_ADMIN_ID,
     createdAt: '2024-02-05T10:00:00Z',
     updatedAt: '2024-02-20T11:00:00Z',
     attemptCount: 0,

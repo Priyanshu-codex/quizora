@@ -13,20 +13,26 @@ import { BookOpen } from 'lucide-react';
 
 export default function UserQuizzesPage() {
   const { user } = useAuth();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [attempts, setAttempts] = useState<Attempt[]>([]);
+  const [quizzes, setQuizzes] = useState<Quiz[]>(() => quizService.getCachedPublished());
+  const [attempts, setAttempts] = useState<Attempt[]>(() => (user ? attemptService.getCachedByUserId(user.id) : []));
   const [search, setSearch] = useState('');
   const [difficulty, setDifficulty] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => quizService.getCachedPublished().length === 0);
 
   useEffect(() => {
     if (!user) return;
+    let isMounted = true;
     Promise.all([quizService.getPublished(), attemptService.getByUserId(user.id)]).then(([q, a]) => {
-      setQuizzes(q);
-      setAttempts(a);
-      setLoading(false);
+      if (isMounted) {
+        setQuizzes(q);
+        setAttempts(a);
+        setLoading(false);
+      }
     });
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   function getAttemptStatus(quizId: string): Attempt['status'] | undefined {

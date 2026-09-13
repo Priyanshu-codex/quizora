@@ -1433,47 +1433,8 @@ body {
   animation: spin 0.7s linear infinite;
 }
 
-/* 6 & 7: Demo Access Section & Role Buttons */
-.login-demo-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.login-demo-divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-.login-demo-divider-line {
-  flex: 1;
-  height: 1px;
-  background: #E2E8F0;
-}
-
-.login-demo-badge {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: #64748B;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  background: #F8FAFC;
-  padding: 3px 9px;
-  border-radius: 9999px;
-  border: 1px solid #E2E8F0;
-}
-
-.login-demo-hint {
-  font-size: 0.8125rem;
-  color: #64748B;
-  text-align: center;
-  margin: 0;
-  font-weight: 400;
-}
-
+/* Account Role Selector (Sign Up) */
+.login-role-segmented-control,
 .login-demo-segmented-control {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1484,6 +1445,7 @@ body {
   border: 1.5px solid #E2E8F0;
 }
 
+.login-role-segment-btn,
 .login-demo-segment-btn {
   height: 36px;
   border: 1px solid transparent;
@@ -1499,10 +1461,12 @@ body {
   gap: 6px;
   transition: all var(--transition-fast);
 }
+.login-role-segment-btn:hover,
 .login-demo-segment-btn:hover {
   color: #0F172A;
   background: rgba(226, 232, 240, 0.4);
 }
+.login-role-segment-btn.is-active,
 .login-demo-segment-btn.is-active {
   background: #FFFFFF;
   color: #0284C7;
@@ -1515,6 +1479,7 @@ body {
   flex-shrink: 0;
   opacity: 0.85;
 }
+.login-role-segment-btn.is-active .login-role-icon,
 .login-demo-segment-btn.is-active .login-role-icon {
   opacity: 1;
   color: #0284C7;
@@ -1588,10 +1553,12 @@ body {
   .login-main-title {
     font-size: 1.5rem;
   }
+  .login-role-segmented-control,
   .login-demo-segmented-control {
     padding: 3px;
     gap: 3px;
   }
+  .login-role-segment-btn,
   .login-demo-segment-btn {
     height: 34px;
     font-size: 0.75rem;
@@ -1608,6 +1575,7 @@ body {
   .login-right-canvas {
     padding: 20px 10px 24px;
   }
+  .login-role-segment-btn,
   .login-demo-segment-btn {
     font-size: 0.6875rem;
     gap: 3px;

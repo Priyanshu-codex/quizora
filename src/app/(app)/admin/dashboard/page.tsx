@@ -20,22 +20,24 @@ interface AdminSummaryData {
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
-  const [summary, setSummary] = useState<AdminSummaryData | null>(null);
-  const [analytics, setAnalytics] = useState<QuizAnalytics[]>([]);
-  const [recentQuizzes, setRecentQuizzes] = useState<Quiz[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<AdminSummaryData | null>(() => resultService.getCachedAdminSummary());
+  const [analytics, setAnalytics] = useState<QuizAnalytics[]>(() => resultService.getCachedOverallAnalytics().slice(0, 5));
+  const [recentQuizzes, setRecentQuizzes] = useState<Quiz[]>(() => quizService.getCachedAll().slice(0, 5));
+  const [loading, setLoading] = useState(() => !resultService.getCachedAdminSummary());
 
   useEffect(() => {
-    Promise.all([
-      resultService.getAdminSummary(),
-      resultService.getOverallAnalytics(),
-      quizService.getAll(),
-    ]).then(([s, a, q]) => {
-      setSummary(s);
-      setAnalytics(a.slice(0, 5));
-      setRecentQuizzes(q.slice(0, 5));
-      setLoading(false);
+    let isMounted = true;
+    resultService.getDashboardData().then(({ summary: s, analytics: a, quizzes: q }) => {
+      if (isMounted) {
+        setSummary(s);
+        setAnalytics(a.slice(0, 5));
+        setRecentQuizzes(q.slice(0, 5));
+        setLoading(false);
+      }
     });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   if (loading) {

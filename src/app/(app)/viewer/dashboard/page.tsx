@@ -16,11 +16,20 @@ interface ViewerSummaryData {
 
 export default function ViewerDashboardPage() {
   const { user } = useAuth();
-  const [summary, setSummary] = useState<ViewerSummaryData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [summary, setSummary] = useState<ViewerSummaryData | null>(() => resultService.getCachedAdminSummary());
+  const [loading, setLoading] = useState(() => !resultService.getCachedAdminSummary());
 
   useEffect(() => {
-    resultService.getAdminSummary().then((s) => { setSummary(s); setLoading(false); });
+    let isMounted = true;
+    resultService.getAdminSummary().then((s) => {
+      if (isMounted) {
+        setSummary(s);
+        setLoading(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

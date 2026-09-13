@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 
 interface StatCardProps {
   label: string;
@@ -10,7 +10,7 @@ interface StatCardProps {
   badge?: string;
 }
 
-export default function StatCard({ label, value, icon, trend, color, subtitle, badge }: StatCardProps) {
+function StatCard({ label, value, icon, trend, color, subtitle, badge }: StatCardProps) {
   const accentColor = color || 'var(--color-primary)';
 
   return (
@@ -89,3 +89,5 @@ export default function StatCard({ label, value, icon, trend, color, subtitle, b
     </div>
   );
 }
+
+export default memo(StatCard);

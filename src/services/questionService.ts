@@ -50,6 +50,12 @@ function mapQuestionToRow(q: Partial<QuestionFormData & { id?: string; order?: n
 }
 
 export const questionService = {
+  getCachedByQuizId(quizId: string): Question[] {
+    return questionsStore
+      .filter((q) => q.quizId === quizId)
+      .sort((a, b) => a.order - b.order);
+  },
+
   async getByQuizId(quizId: string): Promise<Question[]> {
     if (isSupabaseConfigured()) {
       try {
@@ -60,7 +66,10 @@ export const questionService = {
           .order('order_num', { ascending: true });
 
         if (!error && data && data.length > 0) {
-          return (data as SupabaseQuestionRow[]).map(mapRowToQuestion);
+          const fresh = (data as SupabaseQuestionRow[]).map(mapRowToQuestion);
+          const others = questionsStore.filter((q) => q.quizId !== quizId);
+          questionsStore = [...others, ...fresh];
+          return fresh;
         }
       } catch {
         // fallback

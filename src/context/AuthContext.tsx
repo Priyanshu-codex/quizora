@@ -21,21 +21,23 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const session = authService.getSession();
+        return session?.user ?? null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const [isInitialized] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // Initialize session on mount
+  // Initialize session on mount & listen to auth state changes
   useEffect(() => {
-    // 1. Initial cached session
-    const session = authService.getSession();
-    if (session?.user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUser(session.user);
-    }
-    setIsInitialized(true);
-
-    // 2. If Supabase is active, listen to auth state changes
+    // If Supabase is active, listen to auth state changes
     if (isSupabaseConfigured()) {
       const { data: authListener } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, sbSession: Session | null) => {
         if (event === 'SIGNED_OUT' || !sbSession) {

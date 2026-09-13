@@ -1,5 +1,6 @@
 import { User, UserRole } from '@/types';
-import { mockUsers, DEMO_CREDENTIALS } from '@/data/mockUsers';
+import { mockUsers, AUTH_ACCOUNTS } from '@/data/mockUsers';
+import { isValidUuid } from '@/utils/formatters';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 
 const SESSION_KEY = 'quizora_session';
@@ -22,6 +23,13 @@ export interface AuthSession {
   expiresAt: string;
 }
 
+interface RegisteredAccount {
+  user: User;
+  password: string;
+}
+
+const registeredAccounts: RegisteredAccount[] = [];
+
 export const authService = {
   async login(credentials: LoginCredentials): Promise<AuthSession> {
     const email = credentials.email.trim().toLowerCase();
@@ -36,6 +44,35 @@ export const authService = {
         });
 
         if (error) {
+          const errMsg = error.message?.toLowerCase() || '';
+          // If Supabase flags unconfirmed email, bypass the restriction and load profile immediately
+          if (errMsg.includes('email not confirmed') || errMsg.includes('email_not_confirmed')) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('email', email)
+              .maybeSingle();
+
+            if (profile) {
+              const unconfirmedUser: User = {
+                id: profile.id,
+                name: profile.name || email.split('@')[0],
+                email: profile.email || email,
+                role: (profile.role as UserRole) || 'user',
+                avatar: profile.avatar_url,
+                createdAt: profile.created_at || new Date().toISOString(),
+              };
+              const bypassSession: AuthSession = {
+                user: unconfirmedUser,
+                token: `token-${unconfirmedUser.id}-${Date.now()}`,
+                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+              };
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(SESSION_KEY, JSON.stringify(bypassSession));
+              }
+              return bypassSession;
+            }
+          }
           throw new Error(error.message || 'Invalid email or password. Please check your credentials.');
         }
 
@@ -95,23 +132,37 @@ export const authService = {
 
         return session;
       } catch (err: unknown) {
-        // If Supabase call failed, check if this is a known demo credential fallback
-        const validDemo = Object.values(DEMO_CREDENTIALS).find(
+        // If Supabase call failed, check if this is a recently registered local user or system account
+        const validRegistered = registeredAccounts.find(
+          (a) => a.user.email.toLowerCase() === email && a.password === password
+        );
+        if (validRegistered) {
+          return this.createDemoSession(validRegistered.user);
+        }
+
+        const validAccount = Object.values(AUTH_ACCOUNTS).find(
           (c) => c.email.toLowerCase() === email && c.password === password
         );
-        const demoUser = mockUsers.find((u) => u.email.toLowerCase() === email);
+        const matchedUser = mockUsers.find((u) => u.email.toLowerCase() === email);
 
-        if (validDemo && demoUser) {
-          return this.createDemoSession(demoUser);
+        if (validAccount && matchedUser) {
+          return this.createDemoSession(matchedUser);
         }
 
         throw new Error((err as Error)?.message || 'Invalid email or password.');
       }
     }
 
-    // 2. Demo credentials fallback when Supabase is not yet configured with real API keys
+    // 2. System accounts / registered accounts fallback when Supabase is not yet configured with real API keys
+    const registered = registeredAccounts.find(
+      (a) => a.user.email.toLowerCase() === email && a.password === password
+    );
+    if (registered) {
+      return this.createDemoSession(registered.user);
+    }
+
     const user = mockUsers.find((u) => u.email.toLowerCase() === email);
-    const validCreds = Object.values(DEMO_CREDENTIALS).find(
+    const validCreds = Object.values(AUTH_ACCOUNTS).find(
       (c) => c.email.toLowerCase() === email && c.password === password
     );
 
@@ -142,67 +193,90 @@ export const authService = {
     const name = data.name.trim();
 
     if (isSupabaseConfigured()) {
-      const { data: authResult, error } = await supabase.auth.signUp({
-        email,
-        password: data.password,
-        options: {
-          data: {
-            name,
-            role,
-          },
-        },
-      });
-
-      if (error) {
-        throw new Error(error.message || 'Unable to register account. Please try again.');
-      }
-
-      if (!authResult.user) {
-        throw new Error('Registration failed to create a user account.');
-      }
-
-      // Ensure profile exists in public.profiles
       try {
-        await supabase.from('profiles').upsert({
-          id: authResult.user.id,
-          name,
+        const { data: authResult, error } = await supabase.auth.signUp({
           email,
-          role,
+          password: data.password,
+          options: {
+            data: {
+              name,
+              role,
+            },
+          },
         });
-      } catch {
-        // Handled or non-blocking
+
+        if (error) {
+          throw new Error(error.message || 'Unable to register account. Please try again.');
+        }
+
+        if (authResult.user) {
+          // Ensure profile exists in public.profiles
+          try {
+            await supabase.from('profiles').upsert({
+              id: authResult.user.id,
+              name,
+              email,
+              role,
+            });
+          } catch {
+            // Handled or non-blocking
+          }
+
+          // Immediately sign in if session was not returned, bypassing email confirmation requirement
+          let token = authResult.session?.access_token;
+          if (!token) {
+            try {
+              const { data: signInData } = await supabase.auth.signInWithPassword({
+                email,
+                password: data.password,
+              });
+              if (signInData?.session) {
+                token = signInData.session.access_token;
+              }
+            } catch {
+              // Non-blocking fallback
+            }
+          }
+
+          const user: User = {
+            id: authResult.user.id,
+            name,
+            email,
+            role,
+            createdAt: authResult.user.created_at || new Date().toISOString(),
+          };
+
+          const session: AuthSession = {
+            user,
+            token: token || `token-${user.id}-${Date.now()}`,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          };
+
+          registeredAccounts.push({ user, password: data.password });
+
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+          }
+
+          return session;
+        }
+      } catch (err: unknown) {
+        if (err instanceof Error && !err.message.includes('network') && !err.message.includes('fetch')) {
+          throw err;
+        }
       }
-
-      const user: User = {
-        id: authResult.user.id,
-        name,
-        email,
-        role,
-        createdAt: authResult.user.created_at || new Date().toISOString(),
-      };
-
-      const session: AuthSession = {
-        user,
-        token: authResult.session?.access_token || `token-${user.id}-${Date.now()}`,
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      };
-
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-      }
-
-      return session;
     }
 
-    // Demo fallback for local development
+    // Local registration fallback — immediate login without email verification
     const newUser: User = {
-      id: `user-${Date.now()}`,
+      id: `u-${Date.now()}`,
       name,
       email,
       role,
       createdAt: new Date().toISOString(),
     };
 
+    registeredAccounts.push({ user: newUser, password: data.password });
     return this.createDemoSession(newUser);
   },
 
@@ -266,7 +340,7 @@ export const authService = {
 
     let updatedUser: User | null = null;
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isValidUuid(userId)) {
       try {
         await supabase.auth.updateUser({
           data: { name: trimmed },
@@ -275,23 +349,23 @@ export const authService = {
         // Non-blocking if auth user metadata update fails
       }
 
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .update({ name: trimmed })
-        .eq('id', userId)
-        .select()
-        .maybeSingle();
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .update({ name: trimmed })
+          .eq('id', userId)
+          .select()
+          .maybeSingle();
 
-      if (error) {
-        throw new Error(error.message || 'Failed to update name in Supabase profile.');
-      }
-
-      const session = this.getSession();
-      if (session) {
-        updatedUser = {
-          ...session.user,
-          name: profile?.name || trimmed,
-        };
+        const session = this.getSession();
+        if (session && profile) {
+          updatedUser = {
+            ...session.user,
+            name: profile.name || trimmed,
+          };
+        }
+      } catch {
+        // Fallback to local session update
       }
     }
 

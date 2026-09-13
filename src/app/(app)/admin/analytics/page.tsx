@@ -8,14 +8,22 @@ import PageHeader from '@/components/shared/PageHeader';
 import ProgressRing from '@/components/quiz/ProgressRing';
 
 export default function AdminAnalyticsPage() {
-  const [analytics, setAnalytics] = useState<QuizAnalytics[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState<QuizAnalytics[]>(() =>
+    resultService.getCachedOverallAnalytics().filter((x) => x.attempted > 0)
+  );
+  const [loading, setLoading] = useState(() => !resultService.getCachedAdminSummary());
 
   useEffect(() => {
+    let isMounted = true;
     resultService.getOverallAnalytics().then((a) => {
-      setAnalytics(a.filter((x) => x.attempted > 0));
-      setLoading(false);
+      if (isMounted) {
+        setAnalytics(a.filter((x) => x.attempted > 0));
+        setLoading(false);
+      }
     });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
