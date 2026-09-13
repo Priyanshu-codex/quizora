@@ -1,6 +1,5 @@
 import { Quiz, QuizFormData, QuizStatus } from '@/types';
 import { mockQuizzes } from '@/data/mockQuizzes';
-import { DEMO_ADMIN_ID } from '@/data/mockUsers';
 import { isValidUuid } from '@/utils/formatters';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 
@@ -39,7 +38,7 @@ function mapRowToQuiz(row: SupabaseQuizRow): Quiz {
     status: row.status,
     maxViolations: row.max_violations,
     fullscreenRequired: row.fullscreen_required,
-    createdBy: row.created_by || DEMO_ADMIN_ID,
+    createdBy: row.created_by || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     attemptCount: row.attempt_count || 0,
@@ -145,12 +144,12 @@ export const quizService = {
     return quizzesStore.find((q) => q.id === id) ?? null;
   },
 
-  async create(data: QuizFormData): Promise<Quiz> {
-    const id = `quiz-${Date.now()}`;
+  async create(data: QuizFormData & { id?: string; createdBy?: string }): Promise<Quiz> {
+    const id = data.id || `quiz-${Date.now()}`;
     const newQuiz: Quiz = {
       ...data,
       id,
-      createdBy: DEMO_ADMIN_ID,
+      createdBy: data.createdBy && isValidUuid(data.createdBy) ? data.createdBy : undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       attemptCount: 0,
@@ -180,7 +179,7 @@ export const quizService = {
     return newQuiz;
   },
 
-  async update(id: string, data: Partial<QuizFormData>): Promise<Quiz> {
+  async update(id: string, data: Partial<QuizFormData & { createdBy?: string }>): Promise<Quiz> {
     const idx = quizzesStore.findIndex((q) => q.id === id);
     const existing = idx !== -1 ? quizzesStore[idx] : null;
 
@@ -198,11 +197,11 @@ export const quizService = {
         status: 'draft',
         maxViolations: 3,
         fullscreenRequired: true,
-        createdBy: DEMO_ADMIN_ID,
         createdAt: new Date().toISOString(),
         attemptCount: 0,
       }),
       ...data,
+      createdBy: data.createdBy && isValidUuid(data.createdBy) ? data.createdBy : existing?.createdBy,
       updatedAt: new Date().toISOString(),
     };
 

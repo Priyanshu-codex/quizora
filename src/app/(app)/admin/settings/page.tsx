@@ -11,13 +11,9 @@ import { isSupabaseConfigured } from '@/lib/supabase/client';
 export default function AdminSettingsPage() {
   const { success } = useToast();
   const [defaults, setDefaults] = useState({ duration: 30, questionCount: 10, maxAttempts: 3, passingPercentage: 60, maxViolations: 3, fullscreenRequired: false });
-  const [saving, setSaving] = useState(false);
   const isConfigured = isSupabaseConfigured();
 
-  async function handleSave() {
-    setSaving(true);
-    await new Promise((r) => setTimeout(r, 600));
-    setSaving(false);
+  function handleSave() {
     success('Settings saved!', 'Your preferences have been updated.');
   }
 
@@ -95,8 +91,8 @@ export default function AdminSettingsPage() {
         </div>
       </div>
 
-      <button className="btn btn-primary btn-md" style={{ alignSelf: 'flex-start' }} onClick={handleSave} disabled={saving}>
-        {saving ? <span className="animate-spin" style={{ width: 14, height: 14, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', display: 'inline-block' }} /> : <><Save size={15} /> Save Settings</>}
+      <button className="btn btn-primary btn-md" style={{ alignSelf: 'flex-start' }} onClick={handleSave}>
+        <Save size={15} /> Save Settings
       </button>
     </div>
   );

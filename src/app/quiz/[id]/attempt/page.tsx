@@ -142,6 +142,17 @@ export default function QuizAttemptPage({ params }: Props) {
           setAttemptId(active.id);
           setAnswers(active.answers);
           setHasStarted(true);
+
+          if (active.startedAt) {
+            const elapsedSec = Math.floor((Date.now() - new Date(active.startedAt).getTime()) / 1000);
+            const remaining = Math.max(0, q.duration * 60 - elapsedSec);
+            setSecondsLeft(remaining);
+            if (remaining <= 0) {
+              setLoading(false);
+              setTimeout(() => handleAutoSubmit(), 100);
+              return;
+            }
+          }
         } else if (user) {
           try {
             const newAttempt = await attemptService.startAttempt(user.id, id);
@@ -153,7 +164,7 @@ export default function QuizAttemptPage({ params }: Props) {
         setLoading(false);
       });
     });
-  }, [params, user, router]);
+  }, [params, user, router, handleAutoSubmit]);
 
   // Timer countdown - paused when test is locked or not yet started
   useEffect(() => {

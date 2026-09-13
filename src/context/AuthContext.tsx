@@ -42,7 +42,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: authListener } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, sbSession: Session | null) => {
         if (event === 'SIGNED_OUT' || !sbSession) {
           setUser(null);
-        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('quizora_session');
+          }
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
           const metaRole = sbSession.user.user_metadata?.role as UserRole | undefined;
           const metaName = sbSession.user.user_metadata?.name as string | undefined;
 

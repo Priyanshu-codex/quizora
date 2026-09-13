@@ -29,7 +29,7 @@ import { useToast } from '@/context/ToastContext';
 import { quizService } from '@/services/quizService';
 import { questionService } from '@/services/questionService';
 import { Quiz, Question, QuestionType, QuizStatus, QuizDifficulty } from '@/types';
-import { DEMO_ADMIN_ID } from '@/data/mockUsers';
+import { useAuth } from '@/context/AuthContext';
 import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Link from 'next/link';
@@ -53,6 +53,7 @@ export default function QuizBuilderEngine({
   isEditing = false,
 }: QuizBuilderEngineProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const { success, error, info } = useToast();
 
   // ── Quiz Basic Settings State ──
@@ -325,7 +326,7 @@ export default function QuizBuilderEngine({
         status: 'draft',
         maxViolations: Number(maxViolations),
         fullscreenRequired,
-        createdBy: initialQuiz?.createdBy || DEMO_ADMIN_ID,
+        createdBy: initialQuiz?.createdBy || user?.id,
         createdAt: initialQuiz?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         attemptCount: initialQuiz?.attemptCount || 0,
@@ -364,7 +365,7 @@ export default function QuizBuilderEngine({
         status: 'published',
         maxViolations: Number(maxViolations),
         fullscreenRequired,
-        createdBy: initialQuiz?.createdBy || DEMO_ADMIN_ID,
+        createdBy: initialQuiz?.createdBy || user?.id,
         createdAt: initialQuiz?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         attemptCount: initialQuiz?.attemptCount || 0,

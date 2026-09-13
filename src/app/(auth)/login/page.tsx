@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { getHomeRoute } from '@/utils/rbac';
 import { UserRole } from '@/types';
+import QuizoraLoader from '@/components/ui/QuizoraLoader';
 
 type AuthMode = 'signin' | 'signup';
 
@@ -33,6 +34,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const isSubmittingRef = useRef(false);
 
@@ -76,10 +78,12 @@ export default function LoginPage() {
           name: name.trim(),
           role: signupRole,
         });
+        setIsRedirecting(true);
         success('Account Created!', 'Welcome to Quizora.');
         router.replace(getHomeRoute(loggedInUser.role));
       } else {
         const loggedInUser = await login({ email: email.trim(), password });
+        setIsRedirecting(true);
         success('Welcome back!', 'Redirecting to your dashboard…');
         router.replace(getHomeRoute(loggedInUser.role));
       }
@@ -88,11 +92,14 @@ export default function LoginPage() {
       setErrorMsg(msg);
       error('Authentication Error', msg);
       setIsLoading(false);
+      setIsRedirecting(false);
       isSubmittingRef.current = false;
     }
   }
 
-  if (authLoading) return null;
+  if (authLoading || isRedirecting || (isAuthenticated && user)) {
+    return <QuizoraLoader message="Preparing your quiz space…" subtitle="Redirecting to your dashboard" />;
+  }
 
   return (
     <div className="login-fullscreen-root">
