@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, Zap, ArrowRight, AlertCircle, User as UserIcon, GraduationCap, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -34,6 +34,7 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const isSubmittingRef = useRef(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -44,6 +45,11 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Prevent double clicks and multiple submissions
+    if (isSubmittingRef.current || isLoading) {
+      return;
+    }
     setErrorMsg('');
 
     if (authMode === 'signup' && !name.trim()) {
@@ -59,26 +65,30 @@ export default function LoginPage() {
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsLoading(true);
+
     try {
       if (authMode === 'signup') {
-        await signUp({
+        const loggedInUser = await signUp({
           email: email.trim(),
           password,
           name: name.trim(),
           role: signupRole,
         });
         success('Account Created!', 'Welcome to Quizora.');
+        router.replace(getHomeRoute(loggedInUser.role));
       } else {
-        await login({ email: email.trim(), password });
+        const loggedInUser = await login({ email: email.trim(), password });
         success('Welcome back!', 'Redirecting to your dashboard…');
+        router.replace(getHomeRoute(loggedInUser.role));
       }
     } catch (err: unknown) {
       const msg = (err as Error)?.message ?? 'Authentication failed. Please check your credentials.';
       setErrorMsg(msg);
       error('Authentication Error', msg);
-    } finally {
       setIsLoading(false);
+      isSubmittingRef.current = false;
     }
   }
 
@@ -341,8 +351,11 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => {
+                if (isLoading) return;
                 setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
                 setErrorMsg('');
+                isSubmittingRef.current = false;
+                setIsLoading(false);
               }}
               className="login-signup-link"
             >

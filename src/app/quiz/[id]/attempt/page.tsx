@@ -12,6 +12,7 @@ import Timer from '@/components/quiz/Timer';
 import SecurityStatus from '@/components/quiz/SecurityStatus';
 import QuestionPalette from '@/components/quiz/QuestionPalette';
 import Modal from '@/components/ui/Modal';
+import QuizoraLoader from '@/components/ui/QuizoraLoader';
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -321,11 +322,7 @@ export default function QuizAttemptPage({ params }: Props) {
   };
 
   if (loading || !quiz) {
-    return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-app)' }}>
-        <div className="animate-spin" style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid var(--border)', borderTopColor: 'var(--color-primary)' }} />
-      </div>
-    );
+    return <QuizoraLoader message="Preparing your assessment…" subtitle="Loading test questions and security parameters" />;
   }
 
   // Pre-test proctoring entry screen if fullscreen is required and test hasn't started
