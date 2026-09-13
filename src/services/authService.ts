@@ -80,35 +80,24 @@ export const authService = {
           throw new Error('Authentication returned an empty session.');
         }
 
-        // Fetch or create profile record from public.profiles
-        let userRole: UserRole = 'user';
+        // Fast-path: Detect role & name directly from user_metadata (0ms latency, eliminates blocking network roundtrip)
+        let userRole: UserRole = (data.user.user_metadata?.role as UserRole) || 'user';
         let userName = data.user.user_metadata?.name || data.user.email?.split('@')[0] || 'User';
         let userAvatar: string | undefined = data.user.user_metadata?.avatar;
 
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .maybeSingle();
+        // Fallback: only query profiles if role was not in user_metadata
+        if (!data.user.user_metadata?.role) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .maybeSingle();
 
-        if (profile) {
-          userRole = (profile.role as UserRole) || 'user';
-          userName = profile.name || userName;
-          userAvatar = profile.avatar_url || userAvatar;
-        } else {
-          // If profile trigger didn't catch it yet, create it directly
-          const newProfile = {
-            id: data.user.id,
-            name: userName,
-            email: data.user.email || email,
-            role: (data.user.user_metadata?.role as UserRole) || 'user',
-          };
-          try {
-            await supabase.from('profiles').insert(newProfile).select().maybeSingle();
-          } catch {
-            // Profile trigger or insert handled
+          if (profile) {
+            userRole = (profile.role as UserRole) || 'user';
+            userName = profile.name || userName;
+            userAvatar = profile.avatar_url || userAvatar;
           }
-          userRole = newProfile.role;
         }
 
         const user: User = {

@@ -62,22 +62,23 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       if (authMode === 'signup') {
-        await signUp({
+        const loggedInUser = await signUp({
           email: email.trim(),
           password,
           name: name.trim(),
           role: signupRole,
         });
         success('Account Created!', 'Welcome to Quizora.');
+        router.replace(getHomeRoute(loggedInUser.role));
       } else {
-        await login({ email: email.trim(), password });
+        const loggedInUser = await login({ email: email.trim(), password });
         success('Welcome back!', 'Redirecting to your dashboard…');
+        router.replace(getHomeRoute(loggedInUser.role));
       }
     } catch (err: unknown) {
       const msg = (err as Error)?.message ?? 'Authentication failed. Please check your credentials.';
       setErrorMsg(msg);
       error('Authentication Error', msg);
-    } finally {
       setIsLoading(false);
     }
   }

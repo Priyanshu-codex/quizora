@@ -11,6 +11,7 @@ import ProgressRing from '@/components/quiz/ProgressRing';
 import { formatTimeTaken } from '@/utils/formatters';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
+import QuizoraLoader from '@/components/ui/QuizoraLoader';
 
 interface Props { params: Promise<{ id: string; attemptId: string }> }
 
@@ -56,11 +57,7 @@ export default function ResultPage({ params }: Props) {
   }, [params, router, isInitialized, authLoading, isAuthenticated, user]);
 
   if (loading) {
-    return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-app)' }}>
-        <div className="animate-spin" style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid var(--border)', borderTopColor: 'var(--color-primary)' }} />
-      </div>
-    );
+    return <QuizoraLoader message="Calculating results…" subtitle="Generating detailed performance breakdown" />;
   }
 
   if (!attempt || !quiz) return null;

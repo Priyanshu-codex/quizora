@@ -7,6 +7,7 @@ import { canAccess, getHomeRoute } from '@/utils/rbac';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 import MobileNav from '@/components/layout/MobileNav';
+import QuizoraLoader from '@/components/ui/QuizoraLoader';
 
 // Map pathnames to page titles
 function getPageTitle(pathname: string): { title: string; subtitle?: string } {
@@ -51,22 +52,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setMobileNavOpen(false);
   }, [pathname]);
 
-  // Render a stable loading spinner shell while auth state initializes
+  // Render clean, branded Quizora loading shell while auth state initializes
   if (!isInitialized || isLoading) {
-    return (
-      <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-app)' }}>
-        <div
-          className="animate-spin"
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            border: '3px solid var(--border)',
-            borderTopColor: 'var(--color-primary)',
-          }}
-        />
-      </div>
-    );
+    return <QuizoraLoader message="Preparing your quiz space…" />;
   }
 
   if (!isAuthenticated || !user) return null;

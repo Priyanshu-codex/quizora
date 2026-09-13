@@ -11,8 +11,8 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitialized: boolean;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  signUp: (data: SignUpData) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<User>;
+  signUp: (data: SignUpData) => Promise<User>;
   logout: () => Promise<void>;
   updateName: (newName: string) => Promise<User>;
   role: UserRole | null;
@@ -43,7 +43,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (event === 'SIGNED_OUT' || !sbSession) {
           setUser(null);
         } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-          // Fetch freshest user profile
+          const metaRole = sbSession.user.user_metadata?.role as UserRole | undefined;
+          const metaName = sbSession.user.user_metadata?.name as string | undefined;
+
+          // Fast path: if metadata already has role & name, sync instantly without extra network query
+          if (metaRole && metaName) {
+            setUser((prev) => {
+              if (prev && prev.id === sbSession.user.id && prev.role === metaRole && prev.name === metaName) {
+                return prev; // Reference identity preserved -> zero re-renders
+              }
+              return {
+                id: sbSession.user.id,
+                name: metaName,
+                email: sbSession.user.email || '',
+                role: metaRole,
+                avatar: sbSession.user.user_metadata?.avatar,
+                createdAt: sbSession.user.created_at,
+              };
+            });
+            return;
+          }
+
+          // Fallback: fetch profile from database only if metadata is incomplete
           const { data: profile } = await supabase
             .from('profiles')
             .select('*')
@@ -68,21 +89,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const login = useCallback(async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: LoginCredentials): Promise<User> => {
     setIsLoading(true);
     try {
       const session = await authService.login(credentials);
       setUser(session.user);
+      return session.user;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  const signUp = useCallback(async (data: SignUpData) => {
+  const signUp = useCallback(async (data: SignUpData): Promise<User> => {
     setIsLoading(true);
     try {
       const session = await authService.signUp(data);
       setUser(session.user);
+      return session.user;
     } finally {
       setIsLoading(false);
     }

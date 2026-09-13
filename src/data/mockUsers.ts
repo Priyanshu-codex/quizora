@@ -34,7 +34,7 @@ export const mockUsers: User[] = [
 export const AUTH_ACCOUNTS = {
   admin: { email: 'admin@quizora.dev', password: 'Admin@csit', role: 'admin' as const },
   viewer: { email: 'viewer@quizora.dev', password: 'Viewer@csit', role: 'viewer' as const },
-  user: { email: 'user@quizora.dev', password: 'Password@123', role: 'user' as const },
+  user: { email: 'user@quizora.dev', password: 'User@csit123', role: 'user' as const },
 };
 
 export const DEMO_CREDENTIALS = AUTH_ACCOUNTS;
