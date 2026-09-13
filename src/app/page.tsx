@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Zap, ArrowRight, ShieldCheck, Award, Clock, CheckCircle2, Sparkles, BookOpen, ChevronRight } from 'lucide-react';
+import { Zap, ArrowRight, ShieldCheck, Award, Clock, CheckCircle2, BookOpen, ChevronRight } from 'lucide-react';
 import ProgressRing from '@/components/quiz/ProgressRing';
 
 export default function LandingPage() {
@@ -78,7 +78,7 @@ export default function LandingPage() {
                 color: 'var(--color-primary)',
               }}
             >
-              <Sparkles size={14} style={{ color: 'var(--color-primary)' }} /> Next-Generation Assessment Engine
+              Next-Generation Assessment Engine
             </div>
 
             <h1

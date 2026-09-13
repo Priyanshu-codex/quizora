@@ -66,15 +66,24 @@ function ActionMenu({ quiz, onDelete, onDuplicate, onTogglePublish, onToggleClos
 
 export default function AdminQuizzesPage() {
   const { success, error } = useToast();
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [quizzes, setQuizzes] = useState<Quiz[]>(() => quizService.getCachedAll());
+  const [loading, setLoading] = useState(() => quizService.getCachedAll().length === 0);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'published' | 'draft' | 'closed'>('all');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    quizService.getAll().then((q) => { setQuizzes(q); setLoading(false); });
+    let isMounted = true;
+    quizService.getAll().then((q) => {
+      if (isMounted) {
+        setQuizzes(q);
+        setLoading(false);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filtered = quizzes.filter((q) => {

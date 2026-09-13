@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { formatTime } from '@/utils/formatters';
 
 interface TimerProps {
@@ -7,7 +8,7 @@ interface TimerProps {
   totalSeconds: number;
 }
 
-export default function Timer({ secondsLeft, totalSeconds }: TimerProps) {
+function Timer({ secondsLeft, totalSeconds }: TimerProps) {
   const pct = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
   const isWarning = pct <= 0.25 && pct > 0.1;
   const isDanger = pct <= 0.1;
@@ -38,3 +39,5 @@ export default function Timer({ secondsLeft, totalSeconds }: TimerProps) {
     </div>
   );
 }
+
+export default memo(Timer);

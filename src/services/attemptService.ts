@@ -1,5 +1,6 @@
 import { Attempt, AttemptAnswer, AttemptStatus, ViolationRecord } from '@/types';
 import { mockAttempts } from '@/data/mockAttempts';
+import { isValidUuid } from '@/utils/formatters';
 import { questionService } from './questionService';
 import { quizService } from './quizService';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
@@ -130,7 +131,7 @@ export const attemptService = {
       status: 'in_progress',
     };
 
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isValidUuid(userId)) {
       try {
         await supabase.from('attempts').insert({
           id,
@@ -255,12 +256,16 @@ export const attemptService = {
     const timeTaken = Math.round((Date.now() - startTime) / 1000);
     const submittedAt = new Date().toISOString();
 
+    const quiz = await quizService.getById(attempt.quizId);
+    const passingPercentage = quiz?.passingPercentage ?? 60;
+    const passed = percentage >= passingPercentage;
+
     const updated: Attempt = {
       ...attempt,
       score,
       maxScore,
       percentage,
-      passed: percentage >= 60,
+      passed,
       submittedAt,
       timeTaken,
       status,
@@ -276,7 +281,7 @@ export const attemptService = {
           score,
           max_score: maxScore,
           percentage,
-          passed: percentage >= 60,
+          passed,
           submitted_at: submittedAt,
           time_taken: timeTaken,
           status,
@@ -294,8 +299,12 @@ export const attemptService = {
     return updated;
   },
 
+  getCachedByUserId(userId: string): Attempt[] {
+    return refreshAttempts().filter((a) => a.userId === userId);
+  },
+
   async getByUserId(userId: string): Promise<Attempt[]> {
-    if (isSupabaseConfigured()) {
+    if (isSupabaseConfigured() && isValidUuid(userId)) {
       try {
         const { data, error } = await supabase
           .from('attempts')
@@ -304,7 +313,10 @@ export const attemptService = {
           .order('started_at', { ascending: false });
 
         if (!error && data) {
-          return (data as SupabaseAttemptRow[]).map((r) => mapRowToAttempt(r, []));
+          const fresh = (data as SupabaseAttemptRow[]).map((r) => mapRowToAttempt(r, []));
+          const others = attemptsStore.filter((a) => a.userId !== userId);
+          syncStoredAttempts([...fresh, ...others]);
+          return fresh;
         }
       } catch {
         // fallback

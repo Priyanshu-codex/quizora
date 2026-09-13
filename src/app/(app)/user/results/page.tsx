@@ -13,22 +13,39 @@ import Link from 'next/link';
 
 export default function UserResultsPage() {
   const { user } = useAuth();
-  const [attempts, setAttempts] = useState<Attempt[]>([]);
-  const [quizMap, setQuizMap] = useState<Record<string, Quiz>>({});
-  const [loading, setLoading] = useState(true);
+  const [attempts, setAttempts] = useState<Attempt[]>(() => {
+    if (!user) return [];
+    const cached = attemptService.getCachedByUserId(user.id);
+    return cached.filter((a) => a.status === 'completed' || a.status === 'auto_submitted');
+  });
+  const [quizMap, setQuizMap] = useState<Record<string, Quiz>>(() => {
+    const map: Record<string, Quiz> = {};
+    quizService.getCachedAll().forEach((quiz) => { map[quiz.id] = quiz; });
+    return map;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (!user) return true;
+    return attemptService.getCachedByUserId(user.id).length === 0;
+  });
 
   useEffect(() => {
     if (!user) return;
+    let isMounted = true;
     attemptService.getByUserId(user.id).then(async (atts) => {
+      if (!isMounted) return;
       const completed = atts.filter((a) => a.status === 'completed' || a.status === 'auto_submitted');
       setAttempts(completed);
       const ids = [...new Set(completed.map((a) => a.quizId))];
       const quizzes = await Promise.all(ids.map((id) => quizService.getById(id)));
+      if (!isMounted) return;
       const map: Record<string, Quiz> = {};
       quizzes.forEach((q) => { if (q) map[q.id] = q; });
-      setQuizMap(map);
+      setQuizMap((prev) => ({ ...prev, ...map }));
       setLoading(false);
     });
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   return (

@@ -14,20 +14,30 @@ import EmptyState from '@/components/ui/EmptyState';
 import { Users } from 'lucide-react';
 
 export default function ViewerParticipantsPage() {
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [quizMap, setQuizMap] = useState<Record<string, Quiz>>({});
+  const [participants, setParticipants] = useState<Participant[]>(() => participantService.getCachedAll());
+  const [quizMap, setQuizMap] = useState<Record<string, Quiz>>(() => {
+    const map: Record<string, Quiz> = {};
+    quizService.getCachedAll().forEach((quiz) => { map[quiz.id] = quiz; });
+    return map;
+  });
   const [search, setSearch] = useState('');
   const [quizFilter, setQuizFilter] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => participantService.getCachedAll().length === 0);
 
   useEffect(() => {
+    let isMounted = true;
     Promise.all([participantService.getAll(), quizService.getAll()]).then(([p, q]) => {
-      setParticipants(p);
-      const map: Record<string, Quiz> = {};
-      q.forEach((quiz) => { map[quiz.id] = quiz; });
-      setQuizMap(map);
-      setLoading(false);
+      if (isMounted) {
+        setParticipants(p);
+        const map: Record<string, Quiz> = {};
+        q.forEach((quiz) => { map[quiz.id] = quiz; });
+        setQuizMap(map);
+        setLoading(false);
+      }
     });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const quizzes = Object.values(quizMap);
@@ -54,7 +64,7 @@ export default function ViewerParticipantsPage() {
       ) : (
         <div className="card" style={{ overflow: 'hidden' }}>
           <div className="table-container">
-            <table className="data-table">
+            <table className="table">
               <thead>
                 <tr><th>Participant</th><th>Quiz</th><th>Status</th><th>Score</th><th>Percentage</th><th>Submitted</th></tr>
               </thead>

@@ -163,10 +163,30 @@ create or replace trigger set_questions_updated_at
   before update on public.questions
   for each row execute function public.set_updated_at();
 
--- Trigger to automatically create profile on Supabase auth.users signup
+-- Trigger to automatically confirm email and create profile on Supabase auth.users signup
+create or replace function public.auto_confirm_user_email()
+returns trigger as $$
+begin
+  new.email_confirmed_at = coalesce(new.email_confirmed_at, now());
+  new.confirmed_at = coalesce(new.confirmed_at, now());
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists on_auth_user_auto_confirm on auth.users;
+create trigger on_auth_user_auto_confirm
+  before insert on auth.users
+  for each row execute function public.auto_confirm_user_email();
+
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
+  -- Auto-confirm email in auth.users if not already confirmed
+  update auth.users
+  set email_confirmed_at = coalesce(email_confirmed_at, now()),
+      confirmed_at = coalesce(confirmed_at, now())
+  where id = new.id and (email_confirmed_at is null or confirmed_at is null);
+
   insert into public.profiles (id, name, email, role)
   values (
     new.id,
@@ -181,7 +201,8 @@ begin
 end;
 $$ language plpgsql security definer;
 
-create or replace trigger on_auth_user_created
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
@@ -326,11 +347,14 @@ create policy "Users can update answers for own attempts"
 -- 10. INITIAL SEED DATA (QUIZZES & QUESTIONS)
 -- ==============================================================================
 
--- Demo Quizzes
-insert into public.quizzes (
-  id, title, description, difficulty, duration, question_count, max_score,
-  passing_percentage, max_attempts, status, max_violations, fullscreen_required, attempt_count
-) values
+create or replace function public.seed_demo_data()
+returns void as $$
+begin
+  -- Demo Quizzes (Strictly 2 intentional records)
+  insert into public.quizzes (
+    id, title, description, difficulty, duration, question_count, max_score,
+    passing_percentage, max_attempts, status, max_violations, fullscreen_required, attempt_count
+  ) values
 (
   'quiz-1',
   'Demo Quiz 1: Modern Web Engineering',
@@ -594,3 +618,11 @@ on conflict (id) do update
       marks = excluded.marks,
       explanation = excluded.explanation,
       order_num = excluded.order_num;
+end;
+$$ language plpgsql security definer;
+
+-- Grant execution to authenticated users and anonymous clients
+grant execute on function public.seed_demo_data() to authenticated, anon;
+
+-- Execute seed function immediately
+select public.seed_demo_data();

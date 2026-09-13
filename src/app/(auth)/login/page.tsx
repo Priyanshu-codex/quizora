@@ -5,15 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, Zap, ArrowRight, AlertCircle, User as UserIcon, GraduationCap, ShieldCheck } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { DEMO_CREDENTIALS } from '@/data/mockUsers';
 import { getHomeRoute } from '@/utils/rbac';
 import { UserRole } from '@/types';
 
-type DemoRole = 'user' | 'admin' | 'viewer';
 type AuthMode = 'signin' | 'signup';
 
-const DEMO_ROLES: {
-  role: DemoRole;
+const SIGNUP_ROLES: {
+  role: UserRole;
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }[] = [
@@ -30,13 +28,12 @@ export default function LoginPage() {
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
   const [name, setName] = useState('');
   const [signupRole, setSignupRole] = useState<UserRole>('user');
-  const [email, setEmail] = useState(DEMO_CREDENTIALS['user'].email);
-  const [password, setPassword] = useState(DEMO_CREDENTIALS['user'].password);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [selectedRole, setSelectedRole] = useState<DemoRole | null>('user');
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -44,14 +41,6 @@ export default function LoginPage() {
       router.replace(getHomeRoute(user.role));
     }
   }, [isAuthenticated, authLoading, user, router]);
-
-  function selectDemoRole(role: DemoRole) {
-    setSelectedRole(role);
-    const creds = DEMO_CREDENTIALS[role];
-    setEmail(creds.email);
-    setPassword(creds.password);
-    setErrorMsg('');
-  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -85,7 +74,7 @@ export default function LoginPage() {
         success('Welcome back!', 'Redirecting to your dashboard…');
       }
     } catch (err: unknown) {
-      const msg = (err as Error)?.message ?? 'Authentication failed. Please verify your credentials.';
+      const msg = (err as Error)?.message ?? 'Authentication failed. Please check your credentials.';
       setErrorMsg(msg);
       error('Authentication Error', msg);
     } finally {
@@ -178,7 +167,7 @@ export default function LoginPage() {
             <p className="login-main-subtitle">
               {authMode === 'signin'
                 ? 'Sign in to continue your quiz journey.'
-                : 'Join Quizora to take quizzes and verify your knowledge.'}
+                : 'Join Quizora to take quizzes and test your skills.'}
             </p>
           </div>
 
@@ -273,15 +262,15 @@ export default function LoginPage() {
             {authMode === 'signup' && (
               <div className="login-field-group">
                 <label className="login-field-label">Account Role</label>
-                <div className="login-demo-segmented-control" role="tablist">
-                  {DEMO_ROLES.map(({ role, label, icon: RoleIcon }) => (
+                <div className="login-role-segmented-control" role="tablist">
+                  {SIGNUP_ROLES.map(({ role, label, icon: RoleIcon }) => (
                     <button
                       key={role}
                       type="button"
                       role="tab"
                       aria-selected={signupRole === role}
                       onClick={() => setSignupRole(role)}
-                      className={`login-demo-segment-btn ${signupRole === role ? 'is-active' : ''}`}
+                      className={`login-role-segment-btn ${signupRole === role ? 'is-active' : ''}`}
                     >
                       <RoleIcon size={14} className="login-role-icon" />
                       {label}
@@ -341,35 +330,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* 6 & 7: Demo Access Section & Role Buttons (Participant / Admin / Viewer) */}
-          {authMode === 'signin' && (
-            <div className="login-demo-wrapper">
-              <div className="login-demo-divider">
-                <span className="login-demo-divider-line" />
-                <span className="login-demo-badge">Demo Access</span>
-                <span className="login-demo-divider-line" />
-              </div>
-              <p className="login-demo-hint">Select a role to quick-fill credentials</p>
-              <div className="login-demo-segmented-control" role="tablist" aria-label="Demo role selector">
-                {DEMO_ROLES.map(({ role, label, icon: RoleIcon }) => {
-                  const isSelected = selectedRole === role;
-                  return (
-                    <button
-                      key={role}
-                      type="button"
-                      role="tab"
-                      aria-selected={isSelected}
-                      onClick={() => selectDemoRole(role)}
-                      className={`login-demo-segment-btn ${isSelected ? 'is-active' : ''}`}
-                    >
-                      <RoleIcon size={14} className="login-role-icon" />
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* 8: Create Account section / Sign In mode toggle */}
           <div className="login-signup-row">

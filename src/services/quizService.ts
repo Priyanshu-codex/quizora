@@ -1,5 +1,7 @@
 import { Quiz, QuizFormData, QuizStatus } from '@/types';
 import { mockQuizzes } from '@/data/mockQuizzes';
+import { DEMO_ADMIN_ID } from '@/data/mockUsers';
+import { isValidUuid } from '@/utils/formatters';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 
 let quizzesStore: Quiz[] = [...mockQuizzes];
@@ -37,7 +39,7 @@ function mapRowToQuiz(row: SupabaseQuizRow): Quiz {
     status: row.status,
     maxViolations: row.max_violations,
     fullscreenRequired: row.fullscreen_required,
-    createdBy: row.created_by || 'user-1',
+    createdBy: row.created_by || DEMO_ADMIN_ID,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     attemptCount: row.attempt_count || 0,
@@ -58,48 +60,70 @@ function mapQuizToRow(quiz: Partial<QuizFormData & { id?: string; attemptCount?:
   if (quiz.status !== undefined) row.status = quiz.status;
   if (quiz.maxViolations !== undefined) row.max_violations = quiz.maxViolations;
   if (quiz.fullscreenRequired !== undefined) row.fullscreen_required = quiz.fullscreenRequired;
-  if (quiz.createdBy !== undefined) row.created_by = quiz.createdBy;
+  if (quiz.createdBy !== undefined) row.created_by = isValidUuid(quiz.createdBy) ? quiz.createdBy : null;
   if (quiz.attemptCount !== undefined) row.attempt_count = quiz.attemptCount;
   return row;
 }
 
-export const quizService = {
-  async getAll(): Promise<Quiz[]> {
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('quizzes')
-          .select('*')
-          .order('created_at', { ascending: false });
+let activeFetchAllPromise: Promise<Quiz[]> | null = null;
+let lastFetchTime = 0;
+const CACHE_TTL_MS = 30_000;
 
-        if (!error && data && data.length > 0) {
-          quizzesStore = (data as SupabaseQuizRow[]).map(mapRowToQuiz);
-          return quizzesStore;
-        }
-      } catch {
-        // fallback to store
-      }
-    }
+export const quizService = {
+  getCachedAll(): Quiz[] {
     return [...quizzesStore];
   },
 
-  async getPublished(): Promise<Quiz[]> {
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('quizzes')
-          .select('*')
-          .eq('status', 'published')
-          .order('created_at', { ascending: false });
-
-        if (!error && data && data.length > 0) {
-          return (data as SupabaseQuizRow[]).map(mapRowToQuiz);
-        }
-      } catch {
-        // fallback to store
-      }
-    }
+  getCachedPublished(): Quiz[] {
     return quizzesStore.filter((q) => q.status === 'published');
+  },
+
+  getCachedById(id: string): Quiz | null {
+    return quizzesStore.find((q) => q.id === id) ?? null;
+  },
+
+  invalidateCache(): void {
+    lastFetchTime = 0;
+  },
+
+  async getAll(force = false): Promise<Quiz[]> {
+    if (!force && Date.now() - lastFetchTime < CACHE_TTL_MS && quizzesStore.length > 0) {
+      return [...quizzesStore];
+    }
+
+    if (activeFetchAllPromise) {
+      return activeFetchAllPromise;
+    }
+
+    activeFetchAllPromise = (async () => {
+      if (isSupabaseConfigured()) {
+        try {
+          const { data, error } = await supabase
+            .from('quizzes')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (!error && data && data.length > 0) {
+            quizzesStore = (data as SupabaseQuizRow[]).map(mapRowToQuiz);
+            lastFetchTime = Date.now();
+            return quizzesStore;
+          }
+        } catch {
+          // fallback to store
+        }
+      }
+      lastFetchTime = Date.now();
+      return [...quizzesStore];
+    })().finally(() => {
+      activeFetchAllPromise = null;
+    });
+
+    return activeFetchAllPromise;
+  },
+
+  async getPublished(force = false): Promise<Quiz[]> {
+    const all = await this.getAll(force);
+    return all.filter((q) => q.status === 'published');
   },
 
   async getById(id: string): Promise<Quiz | null> {
@@ -126,7 +150,7 @@ export const quizService = {
     const newQuiz: Quiz = {
       ...data,
       id,
-      createdBy: 'user-1',
+      createdBy: DEMO_ADMIN_ID,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       attemptCount: 0,
@@ -152,6 +176,7 @@ export const quizService = {
     }
 
     quizzesStore = [newQuiz, ...quizzesStore];
+    lastFetchTime = 0;
     return newQuiz;
   },
 
@@ -173,7 +198,7 @@ export const quizService = {
         status: 'draft',
         maxViolations: 3,
         fullscreenRequired: true,
-        createdBy: 'user-1',
+        createdBy: DEMO_ADMIN_ID,
         createdAt: new Date().toISOString(),
         attemptCount: 0,
       }),
@@ -204,6 +229,7 @@ export const quizService = {
     if (idx !== -1) {
       quizzesStore[idx] = updated;
     }
+    lastFetchTime = 0;
     return updated;
   },
 
@@ -216,6 +242,7 @@ export const quizService = {
       }
     }
     quizzesStore = quizzesStore.filter((q) => q.id !== id);
+    lastFetchTime = 0;
   },
 
   async publish(id: string): Promise<Quiz> {

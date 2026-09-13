@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Flag, Send, Grid3X3, Lock, Maximize2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Send, Grid3X3, Lock, Maximize2, X, Play } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { quizService } from '@/services/quizService';
 import { questionService } from '@/services/questionService';
@@ -17,7 +17,7 @@ interface Props { params: Promise<{ id: string }> }
 
 export default function QuizAttemptPage({ params }: Props) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, isInitialized } = useAuth();
 
   const [quizId, setQuizId] = useState('');
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -32,6 +32,7 @@ export default function QuizAttemptPage({ params }: Props) {
   const [attemptId, setAttemptId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [isTestLocked, setIsTestLocked] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submitRef = useRef(false);
@@ -67,7 +68,7 @@ export default function QuizAttemptPage({ params }: Props) {
   const resumeTest = async () => {
     isResumingRef.current = true;
     try {
-      if (!document.fullscreenElement) {
+      if (!document.fullscreenElement && quiz?.fullscreenRequired) {
         await document.documentElement.requestFullscreen();
       }
     } catch {
@@ -80,6 +81,36 @@ export default function QuizAttemptPage({ params }: Props) {
     }, 400);
   };
 
+  const startExam = async () => {
+    isResumingRef.current = true;
+    try {
+      if (quiz?.fullscreenRequired && !document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
+      // Proceed if browser restricts fullscreen
+    }
+    setHasStarted(true);
+    setIsTestLocked(false);
+    setTimeout(() => {
+      isResumingRef.current = false;
+    }, 400);
+  };
+
+  // Auth Guard
+  useEffect(() => {
+    if (isInitialized && !authLoading) {
+      if (!isAuthenticated) {
+        router.replace('/login');
+        return;
+      }
+      if (user?.role === 'viewer') {
+        router.replace('/viewer/quizzes');
+        return;
+      }
+    }
+  }, [isInitialized, authLoading, isAuthenticated, user, router]);
+
   // Init
   useEffect(() => {
     params.then(({ id }) => {
@@ -90,13 +121,26 @@ export default function QuizAttemptPage({ params }: Props) {
       ]).then(async ([q, qs]) => {
         if (!q) { router.replace('/user/quizzes'); return; }
         setQuiz(q);
-        setQuestions(qs);
+
+        // Security: sanitize questions to omit correctAnswer and explanation in client state during test taking
+        const sanitized = qs.map((question) => ({
+          ...question,
+          correctAnswer: '' as string,
+          explanation: undefined,
+        }));
+        setQuestions(sanitized);
         setSecondsLeft(q.duration * 60);
+
+        // If fullscreen is not required, mark as started automatically
+        if (!q.fullscreenRequired || (typeof document !== 'undefined' && !!document.fullscreenElement)) {
+          setHasStarted(true);
+        }
 
         const active = attemptService.getActiveAttempt();
         if (active && active.quizId === id) {
           setAttemptId(active.id);
           setAnswers(active.answers);
+          setHasStarted(true);
         } else if (user) {
           try {
             const newAttempt = await attemptService.startAttempt(user.id, id);
@@ -110,9 +154,9 @@ export default function QuizAttemptPage({ params }: Props) {
     });
   }, [params, user, router]);
 
-  // Timer countdown - paused when test is locked
+  // Timer countdown - paused when test is locked or not yet started
   useEffect(() => {
-    if (loading || submitted || secondsLeft <= 0 || isTestLocked) return;
+    if (loading || submitted || secondsLeft <= 0 || isTestLocked || !hasStarted) return;
     timerRef.current = setInterval(() => {
       setSecondsLeft((prev) => {
         if (prev <= 1) {
@@ -127,33 +171,15 @@ export default function QuizAttemptPage({ params }: Props) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [loading, submitted, secondsLeft, isTestLocked, handleAutoSubmit]);
+  }, [loading, submitted, secondsLeft, isTestLocked, hasStarted, handleAutoSubmit]);
 
-  // Automatic fullscreen request on initial load
+  // Fullscreen, tab switch, and window blur detection (only active after exam starts)
   useEffect(() => {
-    if (loading || submitted) return;
-
-    const requestInitialFullscreen = async () => {
-      try {
-        if (!document.fullscreenElement) {
-          await document.documentElement.requestFullscreen();
-        }
-      } catch {
-        // When browser requires direct user interaction for fullscreen, show Test Lock screen
-        setIsTestLocked(true);
-      }
-    };
-
-    requestInitialFullscreen();
-  }, [loading, submitted]);
-
-  // Fullscreen, tab switch, and window blur detection
-  useEffect(() => {
-    if (loading || submitted) return;
+    if (loading || submitted || !hasStarted) return;
 
     const onFSChange = () => {
       if (submitRef.current || isResumingRef.current) return;
-      if (!document.fullscreenElement) {
+      if (!document.fullscreenElement && quiz?.fullscreenRequired) {
         setIsTestLocked(true);
         recordViolation('fullscreen_exit', 'Exited fullscreen mode');
       }
@@ -182,7 +208,7 @@ export default function QuizAttemptPage({ params }: Props) {
       document.removeEventListener('visibilitychange', onVisChange);
       window.removeEventListener('blur', onBlur);
     };
-  }, [loading, submitted, recordViolation]);
+  }, [loading, submitted, hasStarted, quiz?.fullscreenRequired, recordViolation]);
 
   // Prevent copy, paste, text selection, drag/drop, right-click, and inspection shortcuts
   useEffect(() => {
@@ -298,6 +324,75 @@ export default function QuizAttemptPage({ params }: Props) {
     return (
       <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-app)' }}>
         <div className="animate-spin" style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid var(--border)', borderTopColor: 'var(--color-primary)' }} />
+      </div>
+    );
+  }
+
+  // Pre-test proctoring entry screen if fullscreen is required and test hasn't started
+  if (!hasStarted && quiz.fullscreenRequired) {
+    return (
+      <div style={{ minHeight: '100dvh', background: 'var(--bg-app)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 'clamp(16px, 4vw, 32px)' }}>
+        <div
+          className="card"
+          style={{
+            maxWidth: 520,
+            width: '100%',
+            padding: 'clamp(28px, 5vw, 44px)',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 20,
+            boxShadow: 'var(--shadow-lg)',
+          }}
+        >
+          <div
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: '50%',
+              background: 'var(--color-primary-light)',
+              border: '2px solid var(--color-primary-border)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--color-primary)',
+            }}
+          >
+            <Maximize2 size={28} />
+          </div>
+
+          <div>
+            <span className="badge badge-primary" style={{ marginBottom: 8, fontSize: '0.75rem', fontWeight: 700 }}>
+              TEST LOCK ACTIVE
+            </span>
+            <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: 'clamp(1.25rem, 3vw, 1.75rem)', fontWeight: 800, margin: '6px 0 8px', color: 'var(--text-primary)', letterSpacing: '-0.02em' }}>
+              {quiz.title}
+            </h1>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
+              This proctored assessment requires fullscreen mode to maintain test integrity. Your timer will begin once you click start below.
+            </p>
+          </div>
+
+          <div style={{ width: '100%', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, padding: 14, background: 'var(--bg-slate)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Questions</div>
+              <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.125rem', color: 'var(--text-primary)' }}>{questions.length}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Duration</div>
+              <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.125rem', color: 'var(--text-primary)' }}>{quiz.duration}m</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>Passing</div>
+              <div style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.125rem', color: 'var(--color-success)' }}>{quiz.passingPercentage}%</div>
+            </div>
+          </div>
+
+          <button className="btn btn-primary btn-xl" style={{ width: '100%', justifyContent: 'center' }} onClick={startExam}>
+            <Play size={18} /> Begin Assessment &amp; Enter Fullscreen
+          </button>
+        </div>
       </div>
     );
   }

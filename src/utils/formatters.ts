@@ -43,8 +43,14 @@ export function formatDateTime(iso: string): string {
   return `${month} ${day}, ${year} ${hours}:${minutes}`;
 }
 
-export function getGreeting(): string {
-  return 'Good to see you';
+export function getGreeting(name?: string): string {
+  if (name) return `Good to see you, ${name}!`;
+  return 'Good to see you, User!';
+}
+
+export function isValidUuid(id?: string | null): boolean {
+  if (!id) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 }
 
 export function getInitials(name: string): string {

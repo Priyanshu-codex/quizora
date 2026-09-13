@@ -1,5 +1,4 @@
-'use client';
-
+import { memo } from 'react';
 import Link from 'next/link';
 import { Clock, BookOpen, ChevronRight, CheckCircle2, Play, Lock } from 'lucide-react';
 import { Quiz, AttemptStatus } from '@/types';
@@ -14,7 +13,7 @@ interface QuizCardProps {
   showStatus?: boolean;
 }
 
-export default function QuizCard({ quiz, attemptStatus, score, maxScore, actionHref, showStatus = false }: QuizCardProps) {
+function QuizCard({ quiz, attemptStatus, score, maxScore, actionHref, showStatus = false }: QuizCardProps) {
   const isCompleted = attemptStatus === 'completed' || attemptStatus === 'auto_submitted';
   const isInProgress = attemptStatus === 'in_progress';
   const isClosed = quiz.status === 'closed';
@@ -184,3 +183,5 @@ export default function QuizCard({ quiz, attemptStatus, score, maxScore, actionH
     </div>
   );
 }
+
+export default memo(QuizCard);

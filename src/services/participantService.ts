@@ -3,80 +3,113 @@ import { mockUsers } from '@/data/mockUsers';
 import { attemptService } from './attemptService';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase/client';
 
-export const participantService = {
-  async getAll(): Promise<Participant[]> {
-    if (isSupabaseConfigured()) {
-      try {
-        const { data, error } = await supabase
-          .from('attempts')
-          .select(`
-            id,
-            user_id,
-            quiz_id,
-            score,
-            max_score,
-            percentage,
-            passed,
-            started_at,
-            submitted_at,
-            time_taken,
-            violations,
-            status,
-            profiles:user_id ( id, name, email, avatar_url )
-          `)
-          .order('started_at', { ascending: false });
+let cachedParticipants: Participant[] = [];
+let activeFetchParticipantsPromise: Promise<Participant[]> | null = null;
+let lastParticipantsFetchTime = 0;
+const CACHE_TTL_MS = 30_000;
 
-        if (!error && data) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          return data.map((a: any) => {
-            const profile = Array.isArray(a.profiles) ? a.profiles[0] : a.profiles;
-            return {
-              id: `part-${a.id}`,
-              userId: a.user_id,
-              quizId: a.quiz_id,
-              userName: profile?.name || 'Participant',
-              userEmail: profile?.email || '',
-              userAvatar: profile?.avatar_url,
-              status: a.status,
-              score: a.score,
-              maxScore: a.max_score,
-              percentage: Number(a.percentage) || 0,
-              passed: Boolean(a.passed),
-              startedAt: a.started_at,
-              submittedAt: a.submitted_at || undefined,
-              timeTaken: a.time_taken || undefined,
-              violations: Array.isArray(a.violations) ? a.violations.length : 0,
-              attemptId: a.id,
-            };
-          });
-        }
-      } catch {
-        // fallback
-      }
+export const participantService = {
+  getCachedAll(): Participant[] {
+    return [...cachedParticipants];
+  },
+
+  invalidateCache(): void {
+    lastParticipantsFetchTime = 0;
+  },
+
+  async getAll(force = false): Promise<Participant[]> {
+    if (!force && Date.now() - lastParticipantsFetchTime < CACHE_TTL_MS && cachedParticipants.length > 0) {
+      return [...cachedParticipants];
     }
 
-    const attempts = await attemptService.getAll();
-    return attempts.map((a) => {
-      const user = mockUsers.find((u) => u.id === a.userId);
-      return {
-        id: `part-${a.id}`,
-        userId: a.userId,
-        quizId: a.quizId,
-        userName: user?.name || (a.userId === 'user-3' ? 'Jordan Lee' : a.userId === 'user-1' ? 'Admin User' : 'Participant'),
-        userEmail: user?.email || (a.userId === 'user-3' ? 'user@quizora.dev' : 'participant@quizora.dev'),
-        userAvatar: user?.avatar,
-        status: a.status,
-        score: a.score,
-        maxScore: a.maxScore,
-        percentage: a.percentage,
-        passed: a.passed,
-        startedAt: a.startedAt,
-        submittedAt: a.submittedAt,
-        timeTaken: a.timeTaken,
-        violations: a.violations?.length || 0,
-        attemptId: a.id,
-      };
+    if (activeFetchParticipantsPromise) {
+      return activeFetchParticipantsPromise;
+    }
+
+    activeFetchParticipantsPromise = (async () => {
+      if (isSupabaseConfigured()) {
+        try {
+          const { data, error } = await supabase
+            .from('attempts')
+            .select(`
+              id,
+              user_id,
+              quiz_id,
+              score,
+              max_score,
+              percentage,
+              passed,
+              started_at,
+              submitted_at,
+              time_taken,
+              violations,
+              status,
+              profiles:user_id ( id, name, email, avatar_url )
+            `)
+            .order('started_at', { ascending: false });
+
+          if (!error && data) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const items = data.map((a: any) => {
+              const profile = Array.isArray(a.profiles) ? a.profiles[0] : a.profiles;
+              return {
+                id: `part-${a.id}`,
+                userId: a.user_id,
+                quizId: a.quiz_id,
+                userName: profile?.name || 'Participant',
+                userEmail: profile?.email || '',
+                userAvatar: profile?.avatar_url,
+                status: a.status,
+                score: a.score,
+                maxScore: a.max_score,
+                percentage: Number(a.percentage) || 0,
+                passed: Boolean(a.passed),
+                startedAt: a.started_at,
+                submittedAt: a.submitted_at || undefined,
+                timeTaken: a.time_taken || undefined,
+                violations: Array.isArray(a.violations) ? a.violations.length : 0,
+                attemptId: a.id,
+              };
+            });
+            cachedParticipants = items;
+            lastParticipantsFetchTime = Date.now();
+            return items;
+          }
+        } catch {
+          // fallback
+        }
+      }
+
+      const attempts = await attemptService.getAll();
+      const fallbackItems = attempts.map((a) => {
+        const user = mockUsers.find((u) => u.id === a.userId);
+        return {
+          id: `part-${a.id}`,
+          userId: a.userId,
+          quizId: a.quizId,
+          userName: user?.name || (a.userId.toLowerCase().includes('admin') ? 'Priyanshu Sharma' : 'Aarav Sharma'),
+          userEmail: user?.email || (a.userId.toLowerCase().includes('admin') ? 'admin@quizora.dev' : 'user@quizora.dev'),
+          userAvatar: user?.avatar,
+          status: a.status,
+          score: a.score,
+          maxScore: a.maxScore,
+          percentage: a.percentage,
+          passed: a.passed,
+          startedAt: a.startedAt,
+          submittedAt: a.submittedAt,
+          timeTaken: a.timeTaken,
+          violations: a.violations?.length || 0,
+          attemptId: a.id,
+        };
+      });
+      cachedParticipants = fallbackItems;
+      lastParticipantsFetchTime = Date.now();
+      return fallbackItems;
+    })().finally(() => {
+      activeFetchParticipantsPromise = null;
     });
+
+    return activeFetchParticipantsPromise;
   },
 
   async getByQuizId(quizId: string): Promise<Participant[]> {

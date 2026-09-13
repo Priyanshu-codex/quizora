@@ -3,11 +3,14 @@
 -- Seeds the 2 official demo quizzes and their complete questions
 -- ==============================================================================
 
--- 1. DEMO QUIZZES (Strictly 2 intentional records)
-insert into public.quizzes (
-  id, title, description, difficulty, duration, question_count, max_score,
-  passing_percentage, max_attempts, status, max_violations, fullscreen_required, attempt_count
-) values
+create or replace function public.seed_demo_data()
+returns void as $$
+begin
+  -- 1. DEMO QUIZZES (Strictly 2 intentional records)
+  insert into public.quizzes (
+    id, title, description, difficulty, duration, question_count, max_score,
+    passing_percentage, max_attempts, status, max_violations, fullscreen_required, attempt_count
+  ) values
 (
   'quiz-1',
   'Demo Quiz 1: Modern Web Engineering',
@@ -271,3 +274,11 @@ on conflict (id) do update
       marks = excluded.marks,
       explanation = excluded.explanation,
       order_num = excluded.order_num;
+end;
+$$ language plpgsql security definer;
+
+-- Grant execution to authenticated users and anonymous clients
+grant execute on function public.seed_demo_data() to authenticated, anon;
+
+-- Execute seed function immediately
+select public.seed_demo_data();
